@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Connected University - Senior Technical Architect Panel</title>
+<style>
+  :root{
+    --bg0:#05070f; --bg1:#0a1030; --bg2:#0f1a46;
+    --ink:#eef3ff; --ink-2:#b8c6ee; --muted:#8798c9;
+    --brand:#1b96ff; --cyan:#22d3ee; --violet:#a78bfa; --amber:#fbbf24; --emerald:#34d399; --rose:#fb7185;
+    --line:rgba(255,255,255,.12); --glass:rgba(255,255,255,.045); --glass-2:rgba(255,255,255,.08);
+    --font:"Salesforce Sans",-apple-system,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden;background:#000;font-family:var(--font);}
+
+  /* ---------- deck engine ---------- */
+  #viewport{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000;overflow:hidden;}
+  #scaler{width:1280px;height:720px;position:relative;transform-origin:center center;}
+  #track{display:flex;height:100%;width:max-content;transition:transform .6s cubic-bezier(.7,0,.2,1);will-change:transform;}
+  .slide{width:1280px;height:720px;flex:0 0 1280px;position:relative;overflow:hidden;
+    padding:56px 70px;display:flex;flex-direction:column;color:var(--ink);
+    background:
+      radial-gradient(1200px 700px at 78% -18%,rgba(27,150,255,.30),transparent 60%),
+      radial-gradient(900px 620px at 6% 116%,rgba(167,139,250,.24),transparent 55%),
+      linear-gradient(160deg,var(--bg0),var(--bg1) 52%,var(--bg2));
+  }
+  /* faint grid + noise for depth */
+  .slide::before{content:"";position:absolute;inset:0;pointer-events:none;
+    background-image:linear-gradient(rgba(255,255,255,.028) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.028) 1px,transparent 1px);
+    background-size:46px 46px;mask-image:radial-gradient(900px 600px at 60% 40%,#000,transparent 78%);}
+  .slide::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;
+    background:radial-gradient(1px 1px at 20% 30%,rgba(255,255,255,.5),transparent),
+      radial-gradient(1px 1px at 70% 20%,rgba(255,255,255,.35),transparent),
+      radial-gradient(1px 1px at 85% 65%,rgba(255,255,255,.3),transparent),
+      radial-gradient(1px 1px at 40% 80%,rgba(255,255,255,.28),transparent),
+      radial-gradient(1px 1px at 12% 70%,rgba(255,255,255,.25),transparent);}
+
+  .kick{font-size:12.5px;letter-spacing:.32em;text-transform:uppercase;color:var(--cyan);font-weight:800;
+    display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+  .kick::before{content:"";width:30px;height:2px;background:linear-gradient(90deg,var(--cyan),transparent);}
+  h1{font-size:52px;line-height:1.04;letter-spacing:-.02em;font-weight:800;
+    background:linear-gradient(180deg,#fff,#c9d8ff);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  h2{font-size:40px;line-height:1.06;letter-spacing:-.02em;font-weight:800;
+    background:linear-gradient(180deg,#fff,#c6d5ff);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .sub{font-size:17px;line-height:1.5;color:var(--ink-2);max-width:760px;margin-top:16px;font-weight:500;}
+  .body{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;}
+  .tag{position:absolute;top:26px;left:70px;font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted);font-weight:700;z-index:4;}
+  .pg{position:absolute;top:24px;right:34px;font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.1em;z-index:4;opacity:.4;}
+  /* inner slides carry a persistent top-left logo, so move the eyebrow + counter to a right-aligned top stack */
+  body:not(.on-title) .tag{left:auto;right:34px;top:26px;text-align:right;}
+  body:not(.on-title) .pg{top:48px;}
+
+  .chips{display:flex;gap:12px;flex-wrap:wrap;margin-top:auto;padding-top:26px;}
+  .chip{display:flex;flex-direction:column;gap:3px;padding:11px 18px;border:1px solid var(--line);border-radius:13px;
+    background:var(--glass);backdrop-filter:blur(8px);}
+  .chip s{font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:800;text-decoration:none;}
+  .chip b{font-size:14.5px;color:#fff;font-weight:700;}
+
+  .glass{background:var(--glass);border:1px solid var(--line);border-radius:16px;backdrop-filter:blur(9px);}
+  .center{align-items:center;justify-content:center;text-align:center;}
+  .fill{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;}
+  svg{overflow:visible;}
+  /* hover-zoom for dense delivery-map module cells */
+  .mod{transform-box:fill-box;transform-origin:center;cursor:pointer;transition:transform .16s ease;}
+  .mod rect{transition:filter .16s ease;}
+  .mod:hover{transform:scale(2.3);}
+  .mod:hover rect{filter:brightness(1.14) drop-shadow(0 3px 12px rgba(0,0,0,.7));stroke:#eafcff;stroke-width:1.6;}
+  .mod:hover text{paint-order:stroke;}
+
+  /* generic mini-label pills */
+  .mini{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;}
+  .mini span{font-size:12.5px;font-weight:700;color:var(--ink-2);border:1px solid var(--line);
+    background:var(--glass);border-radius:999px;padding:7px 14px;}
+  .mini span b{color:#fff;}
+
+  /* ---------- slide 2 · top-5 issue stat-cards ---------- */
+  .isg{display:grid;grid-template-columns:repeat(5,1fr);gap:18px;width:100%;}
+  .iss{position:relative;overflow:hidden;border-radius:16px;padding:20px 20px 22px;min-height:210px;
+    background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.015));
+    border:1px solid var(--line);}
+  .iss::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;
+    background:linear-gradient(90deg,#fb7185,#f97316);}
+  .iss .ghost{position:absolute;right:6px;bottom:-14px;font-size:96px;font-weight:800;line-height:1;
+    color:rgba(255,255,255,.04);letter-spacing:-.04em;pointer-events:none;}
+  .isshd{display:flex;align-items:center;justify-content:space-between;margin-bottom:30px;}
+  .isspill{font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2);
+    border:1px solid var(--line);border-radius:999px;padding:5px 12px;background:rgba(255,255,255,.04);}
+  .issic{width:34px;height:34px;flex:none;display:grid;place-items:center;font-size:16px;color:#fb7185;
+    border-radius:9px;background:rgba(251,113,133,.1);border:1px solid rgba(251,113,133,.32);}
+  .issstat{position:relative;font-size:46px;font-weight:800;letter-spacing:-.03em;line-height:1;color:#fff;}
+  .issstat em{font-size:17px;font-weight:700;font-style:normal;color:var(--ink-2);margin-left:6px;letter-spacing:0;}
+  .issd{position:relative;margin-top:14px;font-size:13px;font-weight:500;line-height:1.4;color:var(--ink-2);}
+  .issfoot{margin-top:20px;text-align:center;font-size:14.5px;font-weight:700;color:var(--ink-2);}
+  .issfoot i{font-style:normal;color:#fb7185;margin:0 5px;font-weight:800;}
+  .issfoot b{color:#fb7185;font-weight:800;}
+
+  /* ---------- slide 3 · vision ---------- */
+  .vsn{display:flex;flex-direction:column;gap:26px;width:100%;max-width:1080px;}
+  .vft{display:flex;align-items:center;justify-content:center;gap:22px;flex-wrap:nowrap;}
+  .vft .vft-a{font-size:16px;font-weight:600;color:var(--muted);padding:12px 22px;border-radius:12px;
+    border:1px solid var(--line);background:rgba(255,255,255,.03);}
+  .vft .vft-b{font-size:17px;font-weight:800;color:#fff;padding:12px 24px;border-radius:12px;
+    border:1px solid rgba(34,211,238,.4);background:rgba(34,211,238,.1);}
+  .vft .vft-ar{color:var(--cyan);display:grid;place-items:center;}
+  .vgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+  .vcard{position:relative;overflow:hidden;border-radius:16px;padding:22px 22px 24px;
+    background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.015));border:1px solid var(--line);
+    display:flex;flex-direction:column;gap:12px;}
+  .vcard::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;
+    background:linear-gradient(90deg,var(--cyan),var(--brand));}
+  .vcard .vic{width:42px;height:42px;display:grid;place-items:center;color:var(--cyan);border-radius:11px;
+    background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.32);}
+  .vcard b{font-size:17px;font-weight:800;color:#fff;letter-spacing:-.01em;line-height:1.2;}
+  .vcard span:last-child{font-size:13.5px;font-weight:500;color:var(--ink-2);line-height:1.45;}
+  /* how-we-get-there: five strategy cards */
+  .vlead{font-size:13.5px;font-weight:700;letter-spacing:.02em;color:var(--ink-2);text-align:center;text-transform:uppercase;}
+  .vlead b{color:var(--cyan);}
+  .vgrid5{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;width:100%;}
+  .scard{position:relative;overflow:hidden;border-radius:15px;padding:16px 15px 17px;
+    background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.015));border:1px solid var(--line);
+    display:flex;flex-direction:column;gap:8px;}
+  .scard::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;
+    background:linear-gradient(90deg,var(--cyan),var(--brand));}
+  .scard .snum{font-size:12px;font-weight:800;color:var(--cyan);letter-spacing:.06em;}
+  .scard .slab{font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);}
+  .scard b{font-size:15px;font-weight:800;color:#fff;letter-spacing:-.01em;line-height:1.22;}
+  .scard .sdet{font-size:12px;font-weight:500;color:var(--ink-2);line-height:1.4;margin-top:2px;}
+  .scard .sdet em{font-style:normal;color:#dfe6ff;font-weight:700;}
+  /* ---- integration solution slide ---- */
+  .intg{display:flex;flex-direction:column;gap:18px;width:100%;max-width:1080px;}
+  .istats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+  .istat{border-radius:14px;padding:14px 14px 15px;background:var(--glass);border:1px solid var(--line);text-align:center;}
+  .istat b{display:block;font-size:30px;font-weight:800;color:#38bdf8;line-height:1;letter-spacing:-.02em;}
+  .istat span{display:block;font-size:11.5px;font-weight:600;color:var(--ink-2);margin-top:8px;line-height:1.3;}
+  .ilayers{display:flex;flex-direction:column;gap:11px;}
+  .ilayer{display:flex;align-items:center;gap:18px;border-radius:14px;padding:13px 18px;border:1px solid rgba(56,189,248,.3);
+    background:linear-gradient(90deg,rgba(56,189,248,.11),rgba(56,189,248,.02));}
+  .ilayer .ilab{flex:0 0 148px;font-size:12.5px;font-weight:800;color:#7fd8f5;letter-spacing:.03em;}
+  .ilayer .idesc{font-size:13px;font-weight:500;color:var(--ink-2);line-height:1.4;}
+  .ilayer .idesc em{font-style:normal;color:#fff;font-weight:700;}
+  .ilayer.hot{border-color:rgba(251,191,36,.45);background:linear-gradient(90deg,rgba(251,191,36,.12),rgba(251,191,36,.02));}
+  .ilayer.hot .ilab{color:#fbbf24;}
+  /* ---- data & reporting solution slide ---- */
+  .drp{display:flex;flex-direction:column;gap:16px;width:100%;max-width:1120px;}
+  .tiers{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;}
+  .tier{position:relative;overflow:hidden;border-radius:14px;padding:14px 13px 15px;background:var(--glass);border:1px solid var(--line);
+    display:flex;flex-direction:column;gap:6px;}
+  .tier::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--violet),var(--brand));}
+  .tier .tn{font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--violet);}
+  .tier .tt{font-size:14px;font-weight:800;color:#fff;line-height:1.2;}
+  .tier .tp{font-size:11.5px;font-weight:500;color:var(--ink-2);line-height:1.35;margin-top:1px;}
+  .spine2{display:flex;align-items:center;gap:16px;border-radius:14px;padding:14px 18px;flex-wrap:wrap;
+    background:linear-gradient(90deg,rgba(167,139,250,.13),rgba(52,211,153,.06));border:1px solid var(--line);}
+  .spine2 .sp-t{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);white-space:nowrap;}
+  .spine2 .sp-chain{display:flex;align-items:center;gap:9px;flex:1;flex-wrap:wrap;}
+  .sp-node{display:flex;flex-direction:column;gap:2px;border-radius:11px;padding:8px 14px;border:1px solid var(--line);background:rgba(255,255,255,.04);}
+  .sp-node b{font-size:13px;font-weight:800;color:#fff;}
+  .sp-node b em{font-style:normal;color:#a78bfa;}
+  .sp-node span{font-size:10.5px;font-weight:600;color:var(--muted);}
+  .sp-arr{color:var(--violet);font-weight:800;font-size:16px;}
+  .spine2 .sp-note{font-size:11.5px;font-weight:600;color:var(--ink-2);white-space:nowrap;}
+  .spine2 .sp-note b{color:#7be0a0;}
+
+  /* ---------- animations ---------- */
+  @keyframes fadeUp{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes pop{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+  @keyframes draw{from{stroke-dashoffset:var(--len,1200)}to{stroke-dashoffset:0}}
+  @keyframes dashmove{to{stroke-dashoffset:-400}}
+  @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes spinr{to{transform:rotate(-360deg)}}
+  @keyframes glow{0%,100%{opacity:.35}50%{opacity:.9}}
+  @keyframes pulse{0%,100%{transform:scale(1);opacity:.9}50%{transform:scale(1.14);opacity:1}}
+  @keyframes ring{0%{r:6;opacity:.9}100%{r:34;opacity:0}}
+  @keyframes emit{0%{r:100;opacity:.55}100%{r:262;opacity:0}}
+  @keyframes agentpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.28)}}
+  @keyframes sweep{to{transform:translateX(1400px)}}
+
+  /* entrances only on the active slide */
+  .slide .kick,.slide h1,.slide h2,.slide .sub,.slide .chips,.slide .anim{opacity:0;}
+  .slide.active .kick{animation:fadeUp .6s .05s both}
+  .slide.active h1,.slide.active h2{animation:fadeUp .7s .14s both}
+  .slide.active .sub{animation:fadeUp .7s .26s both}
+  .slide.active .chips{animation:fadeUp .7s .5s both}
+  .slide.active .anim{animation:fadeUp .7s both}
+  .slide.active .d1{animation-delay:.2s}.slide.active .d2{animation-delay:.34s}
+  .slide.active .d3{animation-delay:.48s}.slide.active .d4{animation-delay:.62s}
+  .slide.active .d5{animation-delay:.76s}.slide.active .d6{animation-delay:.9s}
+  .slide.active .pp{animation:pop .6s both}
+  .slide.active .drawn{stroke-dasharray:var(--len,1200);animation:draw 1.5s .3s ease-out both}
+  .slide.active .flowline{stroke-dasharray:10 14;animation:dashmove 14s linear infinite}
+  .float{animation:floaty 5s ease-in-out infinite}
+  .orbit{transform-origin:center;animation:spin 26s linear infinite}
+  .orbit-s{transform-origin:center;animation:spinr 34s linear infinite}
+  .glowpulse{animation:glow 4.5s ease-in-out infinite}
+  .emitr{animation:emit 4.6s ease-out infinite}
+  .flow{stroke-dasharray:5 10;animation:dashmove 1.7s linear infinite}
+  .corespark{transform-box:fill-box;transform-origin:center;animation:pulse 3.4s ease-in-out infinite}
+  .agnode{transform-box:fill-box;transform-origin:center;animation:agentpulse 2.6s ease-in-out infinite}
+
+  /* title orbit / hero */
+  .hero-wrap{position:absolute;right:-40px;top:50%;transform:translateY(-50%);width:620px;height:620px;opacity:.95;}
+  .brandline{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+  .brandline .mark{width:34px;height:34px;border-radius:50%;border:3px solid var(--cyan);position:relative;box-shadow:0 0 22px rgba(34,211,238,.6)}
+  .brandline .mark::after{content:"";position:absolute;right:-3px;top:12px;width:7px;height:7px;border-radius:50%;background:var(--amber);box-shadow:0 0 12px var(--amber)}
+  .brandline span{font-size:14px;font-weight:800;letter-spacing:.26em;color:#fff}
+  .brandline span i{color:var(--amber);font-style:normal}
+
+  /* title logo lockup + author byline (clean, study-style) */
+  .sf-lockup{display:flex;align-self:flex-start;align-items:center;gap:11px;margin-bottom:20px}
+  .sf-tile2{width:46px;height:46px;flex:0 0 46px;border-radius:11px;background:#fff;border:none;padding:0;cursor:pointer;
+    display:grid;place-items:center;box-shadow:0 6px 20px rgba(0,161,224,.42);transition:transform .2s,box-shadow .2s}
+  .sf-tile2:hover{transform:scale(1.05);box-shadow:0 8px 24px rgba(0,161,224,.55)}
+  .sf-tile2 svg{width:32px;height:23px;display:block}
+  .sf-lk-tx{display:flex;flex-direction:column;line-height:1.14;text-align:left}
+  .sf-lk-tx b{font-size:16px;font-weight:800;color:#fff;letter-spacing:.2px}
+  .sf-lk-tx small{font-size:12px;font-weight:600;color:#9fb2d8;margin-top:2px}
+  .byline{display:inline-flex;align-self:flex-start;align-items:center;gap:11px;margin-top:26px;padding:7px 18px 7px 7px;
+    border-radius:999px;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(8px);box-shadow:0 6px 20px rgba(5,7,15,.35)}
+  .byline .by-mono{flex:none;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;
+    background:linear-gradient(135deg,var(--brand),#0b6fd6);box-shadow:inset 0 1px 0 rgba(255,255,255,.3)}
+  .byline .by-mono svg{width:20px;height:20px}
+  .byline .by-txt{display:flex;flex-direction:column;line-height:1.24}
+  .byline .by-txt b{font-size:14.5px;font-weight:800;color:#fff}
+  .byline .by-sub{font-size:12px;color:var(--muted);font-weight:600;margin-top:1px}
+
+  /* title-slide scoped type: smaller headline + coloured accent */
+  #s-title h1{font-size:40px;max-width:620px;line-height:1.08;}
+  #s-title .sub{font-size:16px;max-width:560px;margin-top:14px;}
+  #s-title .grad{background:linear-gradient(100deg,#22d3ee,#a78bfa 55%,#fbbf24);
+    -webkit-background-clip:text;background-clip:text;color:transparent;}
+  #s-title .tmetrics{display:flex;align-self:flex-start;align-items:start;gap:40px;margin-top:28px;}
+  #s-title .tm b{display:block;white-space:nowrap;font-size:25px;font-weight:800;line-height:1.15;
+    background:linear-gradient(120deg,#22d3ee,#a78bfa);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  #s-title .tm span{display:block;font-size:13.5px;color:var(--ink-2);font-weight:500;margin-top:6px;}
+  #s-title .byline-row{display:flex;align-self:flex-start;align-items:center;gap:18px;margin-top:26px;flex-wrap:wrap;}
+  #s-title .byline-row .byline{margin-top:0;}
+  #s-title .cca-seal{width:80px;height:80px;flex:none;filter:drop-shadow(0 6px 16px rgba(198,96,63,.45));}
+  #s-title .tmf-seal{width:80px;height:80px;flex:none;filter:drop-shadow(0 6px 16px rgba(27,33,80,.6));}
+  #s-title .sf-seal{width:80px;height:80px;flex:none;filter:drop-shadow(0 6px 16px rgba(0,161,224,.4));}
+  body.on-title #sflogo{opacity:0;pointer-events:none;}
+
+  /* ---- title hero: student portal + agent dialog ---- */
+  .hp-wrap{position:absolute;right:66px;top:50%;transform:translateY(-50%);width:452px;z-index:3;
+    animation:hpFloat 7s ease-in-out infinite;}
+  .hp-win{border-radius:14px;overflow:hidden;background:#fff;color:#1b2438;
+    box-shadow:0 30px 70px rgba(3,6,20,.6),0 0 0 1px rgba(255,255,255,.06);
+    font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  .hp-chrome{display:flex;align-items:center;gap:11px;padding:10px 13px;background:#eef1f7;border-bottom:1px solid #e6eaf2;}
+  .hp-dots{display:flex;gap:6px;}
+  .hp-dots i{width:10px;height:10px;border-radius:50%;display:block;}
+  .hp-dots i:nth-child(1){background:#ff5f57;}.hp-dots i:nth-child(2){background:#febc2e;}.hp-dots i:nth-child(3){background:#28c840;}
+  .hp-url{flex:1;background:#fff;border:1px solid #e6eaf2;border-radius:7px;font-size:11px;color:#6b7690;
+    padding:4px 10px;display:flex;align-items:center;gap:6px;}
+  .hp-url svg{width:11px;height:11px;flex:none;}
+  .hp-body{padding:15px 17px 16px;display:flex;flex-direction:column;}
+  .hp-logo{display:flex;align-items:center;justify-content:center;gap:8px;font-weight:800;font-size:14px;color:#1b2438;margin-bottom:13px;}
+  .hp-mk{width:22px;height:22px;border-radius:6px;background:linear-gradient(135deg,#0b8fd6,#6b5bd6);display:grid;place-items:center;}
+  .hp-mk svg{width:13px;height:13px;}
+  .hp-thread{display:flex;flex-direction:column;gap:10px;}
+  .hp-row{display:flex;gap:8px;align-items:flex-end;}
+  .hp-row.me{flex-direction:row-reverse;}
+  .hp-av{width:24px;height:24px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:11px;font-weight:800;
+    background:linear-gradient(135deg,#0b8fd6,#6b5bd6);color:#fff;}
+  .hp-bubble{max-width:78%;font-size:12.5px;line-height:1.42;padding:8px 11px;border-radius:13px;}
+  .hp-bubble.ag{background:#f4f6fb;color:#1b2438;border-bottom-left-radius:4px;}
+  .hp-bubble.me{background:linear-gradient(135deg,#0b8fd6,#22a5e0);color:#fff;border-bottom-right-radius:4px;}
+  .hp-turn{position:relative;}
+  .hp-typing{position:absolute;left:0;top:2px;display:inline-flex;gap:4px;background:#f4f6fb;padding:9px 11px;border-radius:13px;border-bottom-left-radius:4px;}
+  .hp-typing span{width:5px;height:5px;border-radius:50%;background:#9aa6c0;display:block;animation:hpTd 1.2s infinite;}
+  .hp-typing span:nth-child(2){animation-delay:.15s;}.hp-typing span:nth-child(3){animation-delay:.3s;}
+  .hp-chip{display:inline-flex;align-items:center;gap:5px;margin-top:6px;font-size:10.5px;font-weight:700;color:#0f9d58;
+    background:rgba(15,157,88,.1);border:1px solid rgba(15,157,88,.3);border-radius:999px;padding:3px 9px;}
+  .hp-chip svg{width:11px;height:11px;}
+  .hp-composer{display:flex;align-items:center;gap:8px;border:1px solid #e6eaf2;border-radius:999px;padding:6px 6px 6px 13px;background:#fff;margin-top:13px;}
+  .hp-composer .ph{flex:1;font-size:11.5px;color:#aab3c8;}
+  .hp-composer .caret{display:inline-block;width:1.5px;height:13px;background:#0b8fd6;vertical-align:middle;margin-left:1px;animation:hpCaret 1s step-end infinite;}
+  .hp-composer .send{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#0b8fd6,#6b5bd6);display:grid;place-items:center;flex:none;}
+  .hp-composer .send svg{width:12px;height:12px;}
+  @keyframes hpFloat{0%,100%{transform:translateY(-50%)}50%{transform:translateY(calc(-50% - 8px))}}
+  @keyframes hpTd{0%,80%,100%{opacity:.3;transform:translateY(0)}40%{opacity:1;transform:translateY(-3px)}}
+  @keyframes hpCaret{50%{opacity:0}}
+  @keyframes hpS1{0%,2%{opacity:0;transform:translateY(6px)}6%,93%{opacity:1;transform:none}97%,100%{opacity:0}}
+  @keyframes hpT1{0%,12%{opacity:0}15%,24%{opacity:1}27%,100%{opacity:0}}
+  @keyframes hpA1{0%,25%{opacity:0;transform:translateY(6px)}29%,93%{opacity:1;transform:none}97%,100%{opacity:0}}
+  @keyframes hpS2{0%,44%{opacity:0;transform:translateY(6px)}48%,93%{opacity:1;transform:none}97%,100%{opacity:0}}
+  @keyframes hpT2{0%,52%{opacity:0}55%,63%{opacity:1}66%,100%{opacity:0}}
+  @keyframes hpA2{0%,65%{opacity:0;transform:translateY(6px)}69%,93%{opacity:1;transform:none}97%,100%{opacity:0}}
+  @keyframes hpChip{0%,70%{opacity:0;transform:scale(.8)}75%,93%{opacity:1;transform:scale(1)}97%,100%{opacity:0}}
+  .hp-s1{animation:hpS1 13s infinite;}.hp-t1{animation:hpT1 13s infinite;}.hp-a1{animation:hpA1 13s infinite;}
+  .hp-s2{animation:hpS2 13s infinite;}.hp-t2{animation:hpT2 13s infinite;}.hp-a2{animation:hpA2 13s infinite;}
+  .hp-cp{animation:hpChip 13s infinite;}
+
+  /* controls */
+  #bar{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:12px;
+    background:rgba(10,16,40,.7);border:1px solid var(--line);backdrop-filter:blur(12px);border-radius:999px;
+    padding:8px 14px;z-index:60;opacity:.25;transition:opacity .25s;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+  #bar:hover{opacity:1}
+  #bar button{background:linear-gradient(180deg,var(--brand),#0b6fd6);color:#fff;border:none;border-radius:999px;
+    width:34px;height:34px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  #bar button:disabled{opacity:.3;cursor:default}
+  #bar .pos{color:rgba(207,224,255,.5);font-size:12.5px;font-weight:700;min-width:56px;text-align:center}
+  #bar .fs{width:auto;padding:0 14px;font-size:11.5px;font-weight:700;background:transparent;border:1px solid var(--line);color:rgba(255,255,255,.5)}
+  #prog{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--cyan),var(--violet),var(--amber));z-index:70;transition:width .6s cubic-bezier(.7,0,.2,1);box-shadow:0 0 14px rgba(34,211,238,.7)}
+
+  /* ---------- Salesforce logo + JUMP TO overlay ---------- */
+  #sflogo{position:fixed;top:16px;left:20px;z-index:80;display:flex;align-items:center;gap:9px;
+    cursor:pointer;border:none;background:transparent;padding:4px 8px 4px 4px;transition:transform .2s,opacity .2s;opacity:.82}
+  #sflogo:hover{transform:translateY(-1px);opacity:1}
+  #sflogo .sf-tile{width:36px;height:36px;border-radius:9px;background:#fff;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 4px 14px rgba(0,161,224,.32);flex:0 0 36px}
+  #sflogo .sf-tile svg{width:26px;height:18px;display:block}
+  #sflogo .sf-tx{display:flex;flex-direction:column;line-height:1.1;text-align:left}
+  #sflogo .sf-tx b{font-size:14px;font-weight:800;color:#fff;letter-spacing:.2px}
+  #sflogo .sf-tx s{font-size:10.5px;font-weight:600;color:#9fb2d8;text-decoration:none;margin-top:2px}
+
+  /* ---------- hover-highlight for architecture diagrams ---------- */
+  .node,.edge{transition:opacity .2s ease, filter .2s ease}
+  svg.hovering .node:not(.hot){opacity:.2}
+  svg.hovering .edge:not(.hot){opacity:.07}
+  svg.hovering .node.hot{filter:drop-shadow(0 0 9px rgba(94,180,255,.75))}
+  svg.hovering .edge.hot{opacity:1}
+
+  #navov{position:fixed;inset:0;z-index:100;display:none;flex-direction:column;padding:40px 48px;
+    background-image:radial-gradient(1200px 700px at 80% -12%,rgba(27,150,255,.22),transparent 60%),
+      radial-gradient(900px 620px at 4% 112%,rgba(167,139,250,.2),transparent 55%),
+      linear-gradient(160deg,rgba(5,7,15,.93),rgba(15,26,70,.9));
+    backdrop-filter:blur(20px) saturate(1.2);}
+  #navov.open{display:flex;animation:fadeIn .28s both}
+  #navpanel{width:100%;max-width:1060px;margin:auto;display:flex;flex-direction:column;}
+  #navov .nhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
+  #navov .nhead b{font-size:18px;letter-spacing:.32em;color:#5eb4ff;font-weight:800}
+  #navclose{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--glass);
+    color:#cfe0ff;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}
+  #navclose:hover{background:var(--glass-2);border-color:var(--brand);transform:rotate(90deg)}
+  #navgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-content:start;overflow:auto}
+  .navcard{display:flex;align-items:center;gap:15px;padding:16px 18px;border-radius:14px;border:1px solid var(--line);
+    background:rgba(255,255,255,.03);cursor:pointer;transition:transform .18s,background .18s,border-color .18s;text-align:left;font-family:inherit}
+  .navcard:hover{background:rgba(255,255,255,.07);border-color:rgba(94,180,255,.55);transform:translateY(-2px)}
+  .navcard .nn{width:42px;height:42px;flex:0 0 42px;border-radius:11px;display:flex;align-items:center;justify-content:center;
+    font-size:15px;font-weight:800;color:#9fc3ff;background:rgba(27,150,255,.14);border:1px solid rgba(27,150,255,.3)}
+  .navcard .ntx b{display:block;font-size:15px;font-weight:800;color:#fff;line-height:1.2}
+  .navcard .ntx s{display:block;font-size:12px;color:var(--muted);text-decoration:none;font-weight:600;margin-top:2px}
+  .navcard.cur{border-color:var(--violet);background:linear-gradient(120deg,rgba(167,139,250,.18),rgba(27,150,255,.1));box-shadow:0 0 34px rgba(167,139,250,.32)}
+  .navcard.cur .nn{background:linear-gradient(150deg,#a78bfa,#1b96ff);color:#fff;border-color:transparent}
+  #navov.open .navcard{animation:fadeUp .4s both}
+
+  @media(prefers-reduced-motion:reduce){
+    #track{transition:none}
+    .slide *{animation:none!important;opacity:1!important;transform:none!important;stroke-dashoffset:0!important}
+  }
+</style>
+</head>
+<body>
+<div id="prog"></div>
+
+<button id="sflogo" title="Jump to slide (M)" aria-label="Open slide navigation">
+  <span class="sf-tile">
+    <svg viewBox="0 0 100 70" aria-hidden="true"><path d="M41.6 15.3c3.2-3.3 7.6-5.4 12.5-5.4 6.5 0 12.2 3.6 15.2 9 2.6-1.2 5.5-1.8 8.6-1.8 11.6 0 21 9.5 21 21.2S89.5 59.5 77.9 59.5c-1.4 0-2.8-.1-4.1-.4-2.7 4.7-7.8 7.9-13.6 7.9-2.4 0-4.7-.5-6.8-1.5-2.7 6.3-9 10.7-16.3 10.7-7.6 0-14.1-4.8-16.6-11.5-1.1.2-2.3.4-3.5.4C7.4 64.6 0 57.1 0 47.9c0-6.2 3.3-11.5 8.3-14.4-1-2.3-1.6-4.9-1.6-7.6C6.7 15.1 15.3 6.5 26 6.5c6.3 0 11.9 3 15.6 8.8z" fill="#00A1E0"/></svg>
+  </span>
+  <span class="sf-tx"><b>Salesforce</b><s>Agentic University Transformation</s></span>
+</button>
+
+<div id="navov" role="dialog" aria-label="Slide navigation">
+  <div id="navpanel">
+    <div class="nhead"><b>JUMP TO</b><button id="navclose" title="Close (Esc)" aria-label="Close">✕</button></div>
+    <div id="navgrid"></div>
+  </div>
+</div>
+
+<div id="viewport"><div id="scaler"><div id="track">
+
+<!-- ============ 1 · TITLE ============ -->
+<section class="slide" id="s-title">
+  <span class="tag">Agentic University Transformation</span><span class="pg"></span>
+  <div class="hp-wrap" aria-hidden="true">
+    <div class="hp-win">
+      <div class="hp-chrome"><div class="hp-dots"><i></i><i></i><i></i></div>
+        <div class="hp-url"><svg viewBox="0 0 24 24" fill="none" stroke="#8a93a8" stroke-width="2"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>portal.university.edu / ask</div>
+      </div>
+      <div class="hp-body">
+        <div class="hp-logo"><span class="hp-mk"><svg viewBox="0 0 24 24" fill="#fff"><path d="M12 2l2.4 6.4L21 9l-5 4.2L17.6 21 12 17l-5.6 4L8 13.2 3 9l6.6-.6z"/></svg></span>SPARKS Assistant</div>
+        <div class="hp-thread">
+          <div class="hp-row me hp-s1"><div class="hp-bubble me">Can I take CS3216 next semester?</div></div>
+          <div class="hp-turn" style="min-height:48px">
+            <div class="hp-typing hp-t1"><span></span><span></span><span></span></div>
+            <div class="hp-row hp-a1"><span class="hp-av">✦</span><div class="hp-bubble ag">You meet the prerequisites - it's offered in Semester 2. Shall I add it to your plan?</div></div>
+          </div>
+          <div class="hp-row me hp-s2"><div class="hp-bubble me">Yes please.</div></div>
+          <div class="hp-turn" style="min-height:48px">
+            <div class="hp-typing hp-t2"><span></span><span></span><span></span></div>
+            <div class="hp-row hp-a2"><span class="hp-av">✦</span><div><div class="hp-bubble ag">All set - CS3216 added to Semester 2.</div>
+              <div class="hp-chip hp-cp"><svg viewBox="0 0 24 24" fill="none" stroke="#0f9d58" stroke-width="3"><path d="M5 13l4 4L19 7"/></svg>Enrolment plan updated</div></div></div>
+          </div>
+        </div>
+        <div class="hp-composer"><span class="ph">Ask anything about your studies<span class="caret"></span></span>
+          <span class="send"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M4 12h15M13 6l6 6-6 6"/></svg></span></div>
+      </div>
+    </div>
+  </div>
+  <div class="body" style="max-width:780px">
+    <div class="sf-lockup anim">
+      <button class="sf-tile2" id="heroLogo" title="Jump to slide (M)" aria-label="Open slide navigation">
+        <svg viewBox="0 0 100 70" aria-hidden="true"><path d="M41.6 15.3c3.2-3.3 7.6-5.4 12.5-5.4 6.5 0 12.2 3.6 15.2 9 2.6-1.2 5.5-1.8 8.6-1.8 11.6 0 21 9.5 21 21.2S89.5 59.5 77.9 59.5c-1.4 0-2.8-.1-4.1-.4-2.7 4.7-7.8 7.9-13.6 7.9-2.4 0-4.7-.5-6.8-1.5-2.7 6.3-9 10.7-16.3 10.7-7.6 0-14.1-4.8-16.6-11.5-1.1.2-2.3.4-3.5.4C7.4 64.6 0 57.1 0 47.9c0-6.2 3.3-11.5 8.3-14.4-1-2.3-1.6-4.9-1.6-7.6C6.7 15.1 15.3 6.5 26 6.5c6.3 0 11.9 3 15.6 8.8z" fill="#00A1E0"/></svg>
+      </button>
+      <span class="sf-lk-tx"><b>Salesforce</b><small>Professional Service</small></span>
+    </div>
+    <div class="kick">C-Suite critical case analysis</div>
+    <h1>Transform a World Top-10 University's SIS <span class="grad">to Salesforce</span></h1>
+    <p class="sub">Retiring a 20-year On-premise SIS core</p>
+    <div class="tmetrics anim d4">
+      <div class="tm"><b>Agentic University</b><span>conversations, not forms</span></div>
+      <div class="tm"><b>Governed Transition</b><span>not a big-bang</span></div>
+      <div class="tm"><b>Trust First</b><span>intelligence second</span></div>
+    </div>
+    <div class="byline-row anim d5">
+      <div class="byline">
+        <a class="by-mono" href="https://www.linkedin.com/in/haoshen/" target="_blank" rel="noopener" aria-label="Shenhao on LinkedIn">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#fff" d="M6.94 8.7V19H4V8.7h2.94zM5.47 4.1a1.7 1.7 0 1 1 0 3.4 1.7 1.7 0 0 1 0-3.4zM20 19h-2.93v-5.02c0-1.2-.02-2.74-1.67-2.74-1.67 0-1.93 1.3-1.93 2.65V19h-2.93V8.7h2.82v1.4h.04c.39-.74 1.35-1.52 2.79-1.52 2.98 0 3.53 1.96 3.53 4.51V19z"/></svg>
+        </a>
+        <span class="by-txt"><b>Shenhao</b><span class="by-sub">Senior Technical Architect</span><span class="by-sub">hao.shen@salesforce.com</span></span>
+      </div>
+      <svg class="cca-seal" viewBox="0 0 120 120" role="img" aria-label="Claude Certified Architect - Foundations">
+        <defs><path id="ccaArc" d="M 18 54 A 44 44 0 0 1 102 54" fill="none"/></defs>
+        <polygon points="60,4 87,11 106,31 114,58 108,86 88,106 60,114 32,106 12,86 6,58 14,31 33,11" fill="#C6603F"/>
+        <text font-family="var(--font)" font-size="10" font-weight="700" letter-spacing="1.8" fill="#fbe9e2">
+          <textPath href="#ccaArc" startOffset="50%" text-anchor="middle">FOUNDATIONS</textPath>
+        </text>
+        <g fill="#fff" transform="translate(60,50)">
+          <circle r="3.1"/>
+          <g stroke="#fff" stroke-width="2.1" stroke-linecap="round">
+            <line x1="0" y1="-6" x2="0" y2="-13"/><line x1="0" y1="6" x2="0" y2="13"/>
+            <line x1="-6" y1="0" x2="-13" y2="0"/><line x1="6" y1="0" x2="13" y2="0"/>
+            <line x1="-4.3" y1="-4.3" x2="-9.5" y2="-9.5"/><line x1="4.3" y1="-4.3" x2="9.5" y2="-9.5"/>
+            <line x1="-4.3" y1="4.3" x2="-9.5" y2="9.5"/><line x1="4.3" y1="4.3" x2="9.5" y2="9.5"/>
+          </g>
+        </g>
+        <text x="60" y="82" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-size="12.5" fill="#fff">Claude Certified</text>
+        <text x="60" y="97" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-size="12.5" fill="#fff">Architect</text>
+      </svg>
+      <svg class="tmf-seal" viewBox="0 0 120 120" role="img" aria-label="TM Forum Certified">
+        <defs><path id="tmfArc" d="M 18 54 A 44 44 0 0 1 102 54" fill="none"/></defs>
+        <polygon points="60,4 87,11 106,31 114,58 108,86 88,106 60,114 32,106 12,86 6,58 14,31 33,11" fill="#1B2150"/>
+        <text font-family="var(--font)" font-size="10" font-weight="700" letter-spacing="1.8" fill="#c7cbe6">
+          <textPath href="#tmfArc" startOffset="50%" text-anchor="middle">CERTIFIED</textPath>
+        </text>
+        <text x="60" y="63" text-anchor="middle" font-family="var(--font)" font-weight="800" font-size="27" letter-spacing="-1">
+          <tspan fill="#fff">tm</tspan><tspan fill="#E0103A">f</tspan>
+        </text>
+        <text x="60" y="86" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-size="13" fill="#e6e9f5">TM Forum</text>
+      </svg>
+      <svg class="sf-seal" viewBox="0 0 120 120" role="img" aria-label="Salesforce Certified Application Architect">
+        <defs><path id="appArc" d="M 18 54 A 44 44 0 0 1 102 54" fill="none"/></defs>
+        <polygon points="60,4 87,11 106,31 114,58 108,86 88,106 60,114 32,106 12,86 6,58 14,31 33,11" fill="#032D60"/>
+        <text font-family="var(--font)" font-size="9.5" font-weight="700" letter-spacing="1.6" fill="#9cd6f5">
+          <textPath href="#appArc" startOffset="50%" text-anchor="middle">SALESFORCE</textPath>
+        </text>
+        <g transform="translate(38,33) scale(.44)"><path d="M41.6 15.3c3.2-3.3 7.6-5.4 12.5-5.4 6.5 0 12.2 3.6 15.2 9 2.6-1.2 5.5-1.8 8.6-1.8 11.6 0 21 9.5 21 21.2S89.5 59.5 77.9 59.5c-1.4 0-2.8-.1-4.1-.4-2.7 4.7-7.8 7.9-13.6 7.9-2.4 0-4.7-.5-6.8-1.5-2.7 6.3-9 10.7-16.3 10.7-7.6 0-14.1-4.8-16.6-11.5-1.1.2-2.3.4-3.5.4C7.4 64.6 0 57.1 0 47.9c0-6.2 3.3-11.5 8.3-14.4-1-2.3-1.6-4.9-1.6-7.6C6.7 15.1 15.3 6.5 26 6.5c6.3 0 11.9 3 15.6 8.8z" fill="#00A1E0"/></g>
+        <text x="60" y="82" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-size="12" fill="#fff">Application</text>
+        <text x="60" y="97" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-size="12" fill="#fff">Architect</text>
+      </svg>
+      <svg class="sf-seal" viewBox="0 0 120 120" role="img" aria-label="Salesforce Certified System Architect">
+        <defs><path id="sysArc" d="M 18 54 A 44 44 0 0 1 102 54" fill="none"/></defs>
+        <polygon points="60,4 87,11 106,31 114,58 108,86 88,106 60,114 32,106 12,86 6,58 14,31 33,11" fill="#032D60"/>
+        <text font-family="var(--font)" font-size="9.5" font-weight="700" letter-spacing="1.6" fill="#9cd6f5">
+          <textPath href="#sysArc" startOffset="50%" text-anchor="middle">SALESFORCE</textPath>
+        </text>
+        <g transform="translate(38,33) scale(.44)"><path d="M41.6 15.3c3.2-3.3 7.6-5.4 12.5-5.4 6.5 0 12.2 3.6 15.2 9 2.6-1.2 5.5-1.8 8.6-1.8 11.6 0 21 9.5 21 21.2S89.5 59.5 77.9 59.5c-1.4 0-2.8-.1-4.1-.4-2.7 4.7-7.8 7.9-13.6 7.9-2.4 0-4.7-.5-6.8-1.5-2.7 6.3-9 10.7-16.3 10.7-7.6 0-14.1-4.8-16.6-11.5-1.1.2-2.3.4-3.5.4C7.4 64.6 0 57.1 0 47.9c0-6.2 3.3-11.5 8.3-14.4-1-2.3-1.6-4.9-1.6-7.6C6.7 15.1 15.3 6.5 26 6.5c6.3 0 11.9 3 15.6 8.8z" fill="#00A1E0"/></g>
+        <text x="60" y="82" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-size="12" fill="#fff">System</text>
+        <text x="60" y="97" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-size="12" fill="#fff">Architect</text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2 · PROBLEM ============ -->
+<section class="slide">
+  <span class="tag">Problem Statement</span><span class="pg"></span>
+  <div class="kick">The problem</div>
+  <h2>A 20-year on-premise SIS core</h2>
+  <p class="sub">The legacy student information system reaches vendor end-of-life. Five problems compound - making "keep patching it" the highest-risk option.</p>
+  <div class="fill">
+    <div class="isg">
+      <div class="iss pp d2"><span class="ghost">28</span>
+        <div class="isshd"><span class="isspill">Sunset</span><span class="issic">⏻</span></div>
+        <div class="issstat">2028<em>Dec</em></div>
+        <div class="issd">Vendor end-of-life - no support, no patches, no defer</div></div>
+      <div class="iss pp d3"><span class="ghost">50</span>
+        <div class="isshd"><span class="isspill">Customisation</span><span class="issic">⚙</span></div>
+        <div class="issstat">~50<em>modules</em></div>
+        <div class="issd">of bespoke customisation over 20 years - brittle, slow, costly to change</div></div>
+      <div class="iss pp d4"><span class="ghost">140</span>
+        <div class="isshd"><span class="isspill">Data</span><span class="issic"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg></span></div>
+        <div class="issstat">140+<em>sys</em></div>
+        <div class="issd">Fragmented record - no single, trusted 360 view</div></div>
+      <div class="iss pp d5"><span class="ghost">$</span>
+        <div class="isshd"><span class="isspill">Cost</span><span class="issic">$</span></div>
+        <div class="issstat">↑<em>TCO</em></div>
+        <div class="issd">On-premise infra + scarce specialist skills</div></div>
+      <div class="iss pp d6"><span class="ghost">0</span>
+        <div class="isshd"><span class="isspill">Experience</span><span class="issic"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 8V4M9 4h6"/><path d="M2 13v3M22 13v3"/><circle cx="9.2" cy="14" r="1.3" fill="currentColor" stroke="none"/><circle cx="14.8" cy="14" r="1.3" fill="currentColor" stroke="none"/></svg></span></div>
+        <div class="issstat">0<em>AI</em></div>
+        <div class="issd">Manual, form-driven - students chase the institution</div></div>
+    </div>
+  </div>
+  <div class="issfoot anim d6">Sunset <i>›</i> Customisation <i>›</i> Data <i>›</i> Cost <i>›</i> Experience - <b>patching is the highest-risk option.</b></div>
+</section>
+
+<!-- ============ 3 · VISION ============ -->
+<section class="slide">
+  <span class="tag">The Vision</span><span class="pg"></span>
+  <div class="kick">How we'll walk the solution</div>
+  <h2>Five perspectives. One foundation.</h2>
+  <p class="sub">We examine the transformation through five lenses - then ground all of them in <b style="color:#fff">one foundation model</b>, with Academic Structure as the worked example.</p>
+  <div class="fill">
+    <svg class="anim d2" width="1080" height="372" viewBox="0 0 1080 372" aria-hidden="true">
+      <defs>
+        <linearGradient id="fdG" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(167,139,250,.22)"/><stop offset="100%" stop-color="rgba(52,211,153,.18)"/></linearGradient>
+        <marker id="adV" markerWidth="9" markerHeight="8" refX="8" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="rgba(199,214,245,.7)"/></marker>
+      </defs>
+
+      <!-- converging arrows into the foundation (behind cards) -->
+      <g stroke-width="1.8" fill="none" marker-end="url(#adV)" class="flowline">
+        <path d="M100,164 L150,236" stroke="rgba(34,211,238,.55)"/>
+        <path d="M320,164 L340,236" stroke="rgba(94,180,255,.55)"/>
+        <path d="M540,164 L540,236" stroke="rgba(56,189,248,.55)"/>
+        <path d="M760,164 L740,236" stroke="rgba(167,139,250,.55)"/>
+        <path d="M980,164 L930,236" stroke="rgba(251,191,36,.55)"/>
+      </g>
+
+      <!-- ===== five perspective lenses ===== -->
+      <g text-anchor="middle">
+        <!-- 01 Delivery Strategy -->
+        <g class="pp d3">
+          <rect x="0" y="12" width="200" height="150" rx="14" fill="rgba(255,255,255,.045)" stroke="var(--line)"/>
+          <rect x="14" y="12" width="172" height="4" rx="2" fill="#22d3ee"/>
+          <circle cx="26" cy="42" r="4" fill="#22d3ee"/><text x="44" y="46" font-size="13" font-weight="800" fill="#22d3ee" text-anchor="start">01</text>
+          <text x="100" y="82" font-size="15" font-weight="800" fill="#fff">Delivery Strategy</text>
+          <text x="100" y="110" font-size="11.5" fill="#b8c6ee">One year,</text>
+          <text x="100" y="128" font-size="11.5" fill="#b8c6ee">phased by module</text>
+        </g>
+        <!-- 02 Org Strategy -->
+        <g class="pp d3">
+          <rect x="220" y="12" width="200" height="150" rx="14" fill="rgba(255,255,255,.045)" stroke="var(--line)"/>
+          <rect x="234" y="12" width="172" height="4" rx="2" fill="#5eb4ff"/>
+          <circle cx="246" cy="42" r="4" fill="#5eb4ff"/><text x="264" y="46" font-size="13" font-weight="800" fill="#5eb4ff" text-anchor="start">02</text>
+          <text x="320" y="82" font-size="16" font-weight="800" fill="#fff">Org Strategy</text>
+          <text x="320" y="110" font-size="11.5" fill="#b8c6ee">Two orgs,</text>
+          <text x="320" y="128" font-size="11.5" fill="#b8c6ee">one destination</text>
+        </g>
+        <!-- 03 Integration -->
+        <g class="pp d4">
+          <rect x="440" y="12" width="200" height="150" rx="14" fill="rgba(255,255,255,.045)" stroke="var(--line)"/>
+          <rect x="454" y="12" width="172" height="4" rx="2" fill="#38bdf8"/>
+          <circle cx="466" cy="42" r="4" fill="#38bdf8"/><text x="484" y="46" font-size="13" font-weight="800" fill="#38bdf8" text-anchor="start">03</text>
+          <text x="540" y="82" font-size="16" font-weight="800" fill="#fff">Integration</text>
+          <text x="540" y="110" font-size="11.5" fill="#b8c6ee">One spine,</text>
+          <text x="540" y="128" font-size="11.5" fill="#b8c6ee">140+ systems</text>
+        </g>
+        <!-- 04 Data & Reporting -->
+        <g class="pp d4">
+          <rect x="660" y="12" width="200" height="150" rx="14" fill="rgba(255,255,255,.045)" stroke="var(--line)"/>
+          <rect x="674" y="12" width="172" height="4" rx="2" fill="#a78bfa"/>
+          <circle cx="686" cy="42" r="4" fill="#a78bfa"/><text x="704" y="46" font-size="13" font-weight="800" fill="#a78bfa" text-anchor="start">04</text>
+          <text x="760" y="82" font-size="16" font-weight="800" fill="#fff">Data &amp; Reporting</text>
+          <text x="760" y="110" font-size="11.5" fill="#b8c6ee">One trusted 360,</text>
+          <text x="760" y="128" font-size="11.5" fill="#b8c6ee">no second copy</text>
+        </g>
+        <!-- 05 AI Strategy -->
+        <g class="pp d5">
+          <rect x="880" y="12" width="200" height="150" rx="14" fill="rgba(255,255,255,.045)" stroke="var(--line)"/>
+          <rect x="894" y="12" width="172" height="4" rx="2" fill="#fbbf24"/>
+          <circle cx="906" cy="42" r="4" fill="#fbbf24"/><text x="924" y="46" font-size="13" font-weight="800" fill="#fbbf24" text-anchor="start">05</text>
+          <text x="980" y="82" font-size="16" font-weight="800" fill="#fff">AI Strategy</text>
+          <text x="980" y="110" font-size="11.5" fill="#b8c6ee">Agents that act,</text>
+          <text x="980" y="128" font-size="11.5" fill="#b8c6ee">safely</text>
+        </g>
+      </g>
+
+      <!-- ===== foundation model ===== -->
+      <g class="pp d6">
+        <rect x="0" y="238" width="1080" height="120" rx="16" fill="url(#fdG)" stroke="rgba(167,139,250,.5)"/>
+        <text x="40" y="278" font-size="11" font-weight="800" fill="#c9b6ff" letter-spacing=".16em">ONE FOUNDATION MODEL</text>
+        <text x="40" y="314" font-size="30" font-weight="800" fill="#fff">Academic Structure</text>
+        <text x="40" y="340" font-size="12.5" font-weight="500" fill="#cdd8f5">The worked example that proves the solution end-to-end - GA, roadmap &amp; custom on one board.</text>
+        <g transform="translate(890,268)">
+          <rect x="0" y="0" width="150" height="62" rx="12" fill="rgba(52,211,153,.12)" stroke="var(--emerald)"/>
+          <text x="75" y="27" font-size="10.5" font-weight="800" fill="#7be0a0" text-anchor="middle">WORKED EXAMPLE</text>
+          <text x="75" y="45" font-size="11" font-weight="600" fill="#c7f7df" text-anchor="middle">the five lenses,</text>
+          <text x="75" y="60" font-size="11" font-weight="600" fill="#c7f7df" text-anchor="middle">proven end-to-end</text>
+        </g>
+      </g>
+    </svg>
+  </div>
+  <div class="mini anim d6"><span>each lens is <b>its own section</b></span><span>the foundation <b>ties them together</b></span><span>one example, examined <b>end-to-end</b></span></div>
+</section>
+
+<!-- ============ 12 · TWO-PHASE MODEL TRANSITION ============ -->
+<section class="slide">
+  <span class="tag">Delivery Strategy</span><span class="pg"></span>
+  <div class="kick">Every module placed on its stage, coloured by go-live wave</div>
+  <h2>The delivery map: two phases, one release calendar</h2>
+  <div class="fill">
+    <svg class="anim d2" viewBox="0 0 1282 656" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%" aria-hidden="true"><g class="pp d2"><rect x="70" y="44" width="1202" height="260" rx="12" fill="rgba(94,180,255,.035)" stroke="rgba(94,180,255,.18)"/><rect x="70" y="308" width="1202" height="284" rx="12" fill="rgba(167,139,250,.035)" stroke="rgba(167,139,250,.18)"/><rect x="70" y="598" width="1202" height="54" rx="12" fill="rgba(34,211,238,.05)" stroke="rgba(34,211,238,.25)"/><rect x="10" y="44" width="52" height="260" rx="9" fill="rgba(94,180,255,.12)" stroke="var(--brand)"/><text x="36" y="168" text-anchor="middle" font-size="10" font-weight="800" fill="#9cc4f5">Phase 1</text><text x="36" y="184" text-anchor="middle" font-size="8.5" font-weight="800" fill="#5eb4ff">SPARKS</text><rect x="10" y="308" width="52" height="284" rx="9" fill="rgba(167,139,250,.12)" stroke="var(--violet)"/><text x="36" y="444" text-anchor="middle" font-size="10" font-weight="800" fill="#c6b4f5">Phase 2</text><text x="36" y="460" text-anchor="middle" font-size="8" font-weight="800" fill="#a78bfa">Legacy SIS</text><text x="36" y="632" text-anchor="middle" font-size="9.5" font-weight="800" fill="#22d3ee">Common</text><rect x="74" y="8" width="158" height="28" rx="7" fill="rgba(255,255,255,.06)" stroke="var(--line)"/><text x="153" y="26" text-anchor="middle" font-size="8.6" font-weight="800" fill="#d3ddf6">Foundation &amp; Platform</text><rect x="238" y="8" width="110" height="28" rx="7" fill="rgba(255,255,255,.06)" stroke="var(--line)"/><text x="293" y="26" text-anchor="middle" font-size="8.6" font-weight="800" fill="#d3ddf6">Apply &amp; Admit</text><rect x="354" y="8" width="146" height="28" rx="7" fill="rgba(255,255,255,.06)" stroke="var(--line)"/><text x="427" y="26" text-anchor="middle" font-size="8.6" font-weight="800" fill="#d3ddf6">Enrol &amp; Register</text><rect x="506" y="8" width="392" height="28" rx="7" fill="rgba(255,255,255,.06)" stroke="var(--line)"/><text x="702" y="26" text-anchor="middle" font-size="8.6" font-weight="800" fill="#d3ddf6">Progress &amp; Research</text><rect x="904" y="8" width="112" height="28" rx="7" fill="rgba(255,255,255,.06)" stroke="var(--line)"/><text x="960" y="26" text-anchor="middle" font-size="8.6" font-weight="800" fill="#d3ddf6">Support &amp; Finance</text><rect x="1022" y="8" width="120" height="28" rx="7" fill="rgba(255,255,255,.06)" stroke="var(--line)"/><text x="1082" y="26" text-anchor="middle" font-size="8.6" font-weight="800" fill="#d3ddf6">Assess &amp; Examine</text><rect x="1148" y="8" width="124" height="28" rx="7" fill="rgba(255,255,255,.06)" stroke="var(--line)"/><text x="1210" y="26" text-anchor="middle" font-size="8.6" font-weight="800" fill="#d3ddf6">Graduate &amp; Offboard</text></g><g class="pp d3"><rect x="80" y="68" width="148" height="102" rx="8" fill="rgba(255,255,255,.025)" stroke="rgba(150,170,220,.35)"/><rect x="80" y="52" width="148" height="15" rx="5" fill="#16233f" stroke="rgba(120,150,220,.45)"/><text x="154" y="63" text-anchor="middle" font-size="8" font-weight="800" fill="#cdd9f5">Foundation</text><g class="mod"><rect x="86" y="72" width="136" height="28" rx="6" fill="#2f6fed" stroke="rgba(255,255,255,.16)"/><text x="154" y="84.3" text-anchor="middle" font-size="6.6" font-weight="700" fill="#ffffff">Academic</text><text x="154" y="92.5" text-anchor="middle" font-size="6.6" font-weight="700" fill="#ffffff">Structure</text></g><g class="mod"><rect x="86" y="104" width="136" height="28" rx="6" fill="#8a93a8" stroke="rgba(255,255,255,.16)"/><text x="154" y="120.4" text-anchor="middle" font-size="6.6" font-weight="700" fill="#0b1020">Student Records</text></g><g class="mod"><rect x="86" y="136" width="136" height="28" rx="6" fill="#8a93a8" stroke="rgba(255,255,255,.16)"/><text x="154" y="148.3" text-anchor="middle" font-size="6.6" font-weight="700" fill="#0b1020">Campus</text><text x="154" y="156.5" text-anchor="middle" font-size="6.6" font-weight="700" fill="#0b1020">Community</text></g><rect x="244" y="68" width="100" height="66" rx="8" fill="rgba(255,255,255,.025)" stroke="rgba(150,170,220,.35)"/><rect x="244" y="52" width="100" height="15" rx="5" fill="#16233f" stroke="rgba(120,150,220,.45)"/><text x="294" y="63" text-anchor="middle" font-size="8" font-weight="800" fill="#cdd9f5">Group A</text><g class="mod"><rect x="250" y="72" width="88" height="26" rx="6" fill="#5b9bf5" stroke="rgba(255,255,255,.16)"/><text x="294" y="87.4" text-anchor="middle" font-size="6.6" font-weight="700" fill="#08122b">Admissions</text></g><g class="mod"><rect x="250" y="102" width="88" height="26" rx="6" fill="#2f6fed" stroke="rgba(255,255,255,.16)"/><text x="294" y="117.4" text-anchor="middle" font-size="6.6" font-weight="700" fill="#ffffff">APC</text></g><rect x="354" y="68" width="146" height="38" rx="8" fill="rgba(255,255,255,.025)" stroke="rgba(150,170,220,.35)"/><rect x="354" y="52" width="146" height="15" rx="5" fill="#16233f" stroke="rgba(120,150,220,.45)"/><text x="427" y="63" text-anchor="middle" font-size="8" font-weight="800" fill="#cdd9f5">Group F</text><g class="mod"><rect x="360" y="72" width="134" height="28" rx="6" fill="#93c0f7" stroke="rgba(255,255,255,.16)"/><text x="427" y="88.4" text-anchor="middle" font-size="6.6" font-weight="700" fill="#08122b">E-courses / Dynamic Reg</text></g><rect x="354" y="120" width="146" height="74" rx="8" fill="rgba(255,255,255,.025)" stroke="rgba(150,170,220,.35)"/><rect x="354" y="104" width="146" height="15" rx="5" fill="#16233f" stroke="rgba(120,150,220,.45)"/><text x="427" y="115" text-anchor="middle" font-size="8" font-weight="800" fill="#cdd9f5">Group C</text><g class="mod"><rect x="360" y="124" width="134" height="30" rx="6" fill="#a97c50" stroke="rgba(255,255,255,.16)"/><text x="427" y="141.4" text-anchor="middle" font-size="6.6" font-weight="700" fill="#ffffff">Global Education</text></g><g class="mod"><rect x="360" y="158" width="134" height="30" rx="6" fill="#1e3a8a" stroke="rgba(255,255,255,.16)"/><text x="427" y="171.3" text-anchor="middle" font-size="6.6" font-weight="700" fill="#ffffff">Course Mapping &amp;</text><text x="427" y="179.5" text-anchor="middle" font-size="6.6" font-weight="700" fill="#ffffff">Credit Transfer</text></g><rect x="506" y="68" width="120" height="102" rx="8" fill="rgba(255,255,255,.025)" stroke="rgba(150,170,220,.35)"/><rect x="506" y="52" width="120" height="15" rx="5" fill="#16233f" stroke="rgba(120,150,220,.45)"/><text x="566" y="63" text-anchor="middle" font-size="8" font-weight="800" fill="#cdd9f5">Group D</text><g class="mod"><rect x="512" y="72" width="108" height="28" rx="6" fill="#a97c50" stroke="rgba(255,255,255,.16)"/><text x="566" y="88.4" text-anchor="middle" font-size="6.6" font-weight="700" fill="#ffffff">Pro Bono Portal</text></g><g class="mod"><rect x="512" y="104" width="108" height="28" rx="6" fill="#a97c50" stroke="rgba(255,255,255,.16)"/><text x="566" y="116.3" text-anchor="middle" font-size="6.6" font-weight="700" fill="#ffffff">Fieldwork Mgmt</text><text x="566" y="124.5" text-anchor="middle" font-size="6.6" font-weight="700" fill="#ffffff">(FMS)</text></g><g class="mod"><rect x="512" y="136" width="108" height="28" rx="6" fill="#d9c9a0" stroke="rgba(255,255,255,.16)"/><text x="566" y="152.4" text-anchor="middle" font-size="6.6" font-weight="700" fill="#2a2416">Tuition Grant Bond</text></g><rect x="630" y="68" width="120" height="132" rx="8" fill="rgba(255,255,255,.025)" stroke="rgba(150,170,220,.35)"/><rect x="630" y="52" width="120" height="15" rx="5" fill="#16233f" stroke="rgba(120,150,220,.45)"/><text x="690" y="63" text-anchor="middle" font-size="8" font-weight="800" fill="#cdd9f5">Group H</text><g class="mod"><rect x="636" y="72" width="108" height="28" rx="6" fill="#2f6fed" stroke="rgba(255,255,255,.16)"/><text x="690" y="84.3" text-anchor="middle" font-size="6.6" font-weight="700" fill="#ffffff">Normal</text><text x="690" y="92.5" text-anchor="middle" font-size="6.6" font-weight="700" fill="#ffffff">Candidature</text></g><g class="mod"><rect x="636" y="104" width="108" height="28" rx="6" fill="#2f6fed" stroke="rgba(255,255,255,.16)"/><text x="690" y="120.4" text-anchor="middle" font-size="6.6" font-weight="700" fill="#ffffff">Leave of Absence</text></g><g class="mod"><rect x="636" y="136" width="108" height="28" rx="6" fill="#5b9bf5" stroke="rgba(255,255,255,.16)"/><text x="690" y="144.2" text-anchor="middle" font-size="6.6" font-weight="700" fill="#08122b">Student Requests</text><text x="690" y="152.4" text-anchor="middle" font-size="6.6" font-weight="700" fill="#08122b">(Waiver /</text><text x="690" y="160.6" text-anchor="middle" font-size="6.6" font-weight="700" fill="#08122b">Withdrawal)</text></g><g class="mod"><rect x="636" y="168" width="108" height="28" rx="6" fill="#93c0f7" stroke="rgba(255,255,255,.16)"/><text x="690" y="180.3" text-anchor="middle" font-size="6.6" font-weight="700" fill="#08122b">Track RC</text><text x="690" y="188.5" text-anchor="middle" font-size="6.6" font-weight="700" fill="#08122b">Progress</text></g><rect x="754" y="68" width="120" height="40" rx="8" fill="rgba(255,255,255,.025)" stroke="rgba(150,170,220,.35)"/><rect x="754" y="52" width="120" height="15" rx="5" fill="#16233f" stroke="rgba(120,150,220,.45)"/><text x="814" y="63" text-anchor="middle" font-size="8" font-weight="800" fill="#cdd9f5">Group E</text><g class="mod"><rect x="760" y="72" width="108" height="30" rx="6" fill="#93c0f7" stroke="rgba(255,255,255,.16)"/><text x="814" y="89.4" text-anchor="middle" font-size="6.6" font-weight="700" fill="#08122b">Student Milestone</text></g><rect x="754" y="120" width="120" height="40" rx="8" fill="rgba(255,255,255,.025)" stroke="rgba(150,170,220,.35)"/><rect x="754" y="104" width="120" height="15" rx="5" fill="#16233f" stroke="rgba(120,150,220,.45)"/><text x="814" y="115" text-anchor="middle" font-size="8" font-weight="800" fill="#cdd9f5">Group B</text><g class="mod"><rect x="760" y="124" width="108" height="30" rx="6" fill="#d9c9a0" stroke="rgba(255,255,255,.16)"/><text x="814" y="137.3" text-anchor="middle" font-size="6.6" font-weight="700" fill="#2a2416">Built-in Student</text><text x="814" y="145.5" text-anchor="middle" font-size="6.6" font-weight="700" fill="#2a2416">Services</text></g><rect x="904" y="68" width="104" height="66" rx="8" fill="rgba(255,255,255,.025)" stroke="rgba(150,170,220,.35)"/><rect x="904" y="52" width="104" height="15" rx="5" fill="#16233f" stroke="rgba(120,150,220,.45)"/><text x="956" y="63" text-anchor="middle" font-size="8" font-weight="800" fill="#cdd9f5">Group J</text><g class="mod"><rect x="910" y="72" width="92" height="26" rx="6" fill="#2f6fed" stroke="rgba(255,255,255,.16)"/><text x="956" y="87.4" text-anchor="middle" font-size="6.6" font-weight="700" fill="#ffffff">Student Finance</text></g><g class="mod"><rect x="910" y="102" width="92" height="26" rx="6" fill="#a97c50" stroke="rgba(255,255,255,.16)"/><text x="956" y="117.4" text-anchor="middle" font-size="6.6" font-weight="700" fill="#ffffff">Financial Aid</text></g></g><g class="pp d3"><rect x="1030" y="52" width="238" height="244" rx="10" fill="rgba(8,14,28,.65)" stroke="rgba(150,170,220,.4)"/><text x="1046" y="72" font-size="10" font-weight="800" fill="#e8eefc">Diagram key</text><rect x="1046" y="88" width="15" height="15" rx="3" fill="#8a93a8" stroke="rgba(255,255,255,.2)"/><text x="1068" y="99.5" font-size="8.4" font-weight="700" fill="#d3ddf6">GA</text><rect x="1046" y="110" width="15" height="15" rx="3" fill="#1e3a8a" stroke="rgba(255,255,255,.2)"/><text x="1068" y="121.5" font-size="8.4" font-weight="700" fill="#d3ddf6">Winter '27 (Oct 2026)</text><rect x="1046" y="132" width="15" height="15" rx="3" fill="#2f6fed" stroke="rgba(255,255,255,.2)"/><text x="1068" y="143.5" font-size="8.4" font-weight="700" fill="#d3ddf6">Spring '27 (Feb 2027)</text><rect x="1046" y="154" width="15" height="15" rx="3" fill="#5b9bf5" stroke="rgba(255,255,255,.2)"/><text x="1068" y="165.5" font-size="8.4" font-weight="700" fill="#d3ddf6">Summer '27 (Jun 2027)</text><rect x="1046" y="176" width="15" height="15" rx="3" fill="#93c0f7" stroke="rgba(255,255,255,.2)"/><text x="1068" y="187.5" font-size="8.4" font-weight="700" fill="#d3ddf6">Winter '28 (Oct 2027)</text><rect x="1046" y="198" width="15" height="15" rx="3" fill="#c9def8" stroke="rgba(255,255,255,.2)"/><text x="1068" y="209.5" font-size="8.4" font-weight="700" fill="#d3ddf6">Summer '28 (Jun 2028)</text><rect x="1046" y="220" width="15" height="15" rx="3" fill="#a97c50" stroke="rgba(255,255,255,.2)"/><text x="1068" y="231.5" font-size="8.4" font-weight="700" fill="#d3ddf6">Framework To Be Leveraged</text><rect x="1046" y="242" width="15" height="15" rx="3" fill="#d9c9a0" stroke="rgba(255,255,255,.2)"/><text x="1068" y="253.5" font-size="8.4" font-weight="700" fill="#d3ddf6">Custom</text><rect x="1046" y="264" width="15" height="15" rx="3" fill="none" stroke="#cdd9f5" stroke-width="1.3"/><text x="1068" y="275.5" font-size="8.4" font-weight="700" fill="#d3ddf6">Rectangle container (group)</text></g><g class="pp d5"><rect x="356" y="328" width="150" height="70" rx="8" fill="rgba(255,255,255,.025)" stroke="rgba(150,170,220,.35)"/><rect x="356" y="312" width="150" height="15" rx="5" fill="#16233f" stroke="rgba(120,150,220,.45)"/><text x="431" y="323" text-anchor="middle" font-size="8" font-weight="800" fill="#cdd9f5">Group G</text><g class="mod"><rect x="362" y="332" width="66" height="28" rx="6" fill="#2f6fed" stroke="rgba(255,255,255,.16)"/><text x="395" y="344.3" text-anchor="middle" font-size="6.6" font-weight="700" fill="#ffffff">Academic Plan</text><text x="395" y="352.5" text-anchor="middle" font-size="6.6" font-weight="700" fill="#ffffff">Declaration</text></g><g class="mod"><rect x="432" y="332" width="66" height="28" rx="6" fill="#2f6fed" stroke="rgba(255,255,255,.16)"/><text x="465" y="348.4" text-anchor="middle" font-size="6.6" font-weight="700" fill="#ffffff">Enrolment</text></g><g class="mod"><rect x="362" y="364" width="66" height="28" rx="6" fill="#c9def8" stroke="rgba(255,255,255,.16)"/><text x="395" y="380.4" text-anchor="middle" font-size="6.6" font-weight="700" fill="#08122b">Course Reg</text></g><g class="mod"><rect x="432" y="364" width="66" height="28" rx="6" fill="#d9c9a0" stroke="rgba(255,255,255,.16)"/><text x="465" y="380.4" text-anchor="middle" font-size="6.6" font-weight="700" fill="#2a2416">DYOC</text></g><rect x="512" y="328" width="96" height="44" rx="8" fill="rgba(255,255,255,.025)" stroke="rgba(150,170,220,.35)"/><rect x="512" y="312" width="96" height="15" rx="5" fill="#16233f" stroke="rgba(120,150,220,.45)"/><text x="560" y="323" text-anchor="middle" font-size="8" font-weight="800" fill="#cdd9f5">Group C</text><g class="mod"><rect x="518" y="332" width="84" height="34" rx="6" fill="#c9def8" stroke="rgba(255,255,255,.16)"/><text x="560" y="347.3" text-anchor="middle" font-size="6.6" font-weight="700" fill="#08122b">Accessibility</text><text x="560" y="355.5" text-anchor="middle" font-size="6.6" font-weight="700" fill="#08122b">Support</text></g><rect x="512" y="392" width="96" height="48" rx="8" fill="rgba(255,255,255,.025)" stroke="rgba(150,170,220,.35)"/><rect x="512" y="376" width="96" height="15" rx="5" fill="#16233f" stroke="rgba(120,150,220,.45)"/><text x="560" y="387" text-anchor="middle" font-size="8" font-weight="800" fill="#cdd9f5">Group N</text><g class="mod"><rect x="518" y="396" width="84" height="38" rx="6" fill="#a97c50" stroke="rgba(255,255,255,.16)"/><text x="560" y="413.3" text-anchor="middle" font-size="6.6" font-weight="700" fill="#ffffff">e-Portfolio /</text><text x="560" y="421.5" text-anchor="middle" font-size="6.6" font-weight="700" fill="#ffffff">Life Narrative</text></g><rect x="616" y="328" width="118" height="178" rx="8" fill="rgba(255,255,255,.025)" stroke="rgba(150,170,220,.35)"/><rect x="616" y="312" width="118" height="15" rx="5" fill="#16233f" stroke="rgba(120,150,220,.45)"/><text x="675" y="323" text-anchor="middle" font-size="8" font-weight="800" fill="#cdd9f5">Group E</text><g class="mod"><rect x="622" y="332" width="106" height="30" rx="6" fill="#d9c9a0" stroke="rgba(255,255,255,.16)"/><text x="675" y="349.4" text-anchor="middle" font-size="6.6" font-weight="700" fill="#2a2416">Track RS Leave</text></g><g class="mod"><rect x="622" y="366" width="106" height="30" rx="6" fill="#93c0f7" stroke="rgba(255,255,255,.16)"/><text x="675" y="383.4" text-anchor="middle" font-size="6.6" font-weight="700" fill="#08122b">Thesis Workflow</text></g><g class="mod"><rect x="622" y="400" width="106" height="30" rx="6" fill="#93c0f7" stroke="rgba(255,255,255,.16)"/><text x="675" y="413.3" text-anchor="middle" font-size="6.6" font-weight="700" fill="#08122b">Research Student</text><text x="675" y="421.5" text-anchor="middle" font-size="6.6" font-weight="700" fill="#08122b">Workflow</text></g><g class="mod"><rect x="622" y="434" width="106" height="30" rx="6" fill="#2f6fed" stroke="rgba(255,255,255,.16)"/><text x="675" y="447.3" text-anchor="middle" font-size="6.6" font-weight="700" fill="#ffffff">Research Progress</text><text x="675" y="455.5" text-anchor="middle" font-size="6.6" font-weight="700" fill="#ffffff">Report</text></g><g class="mod"><rect x="622" y="468" width="106" height="30" rx="6" fill="#d9c9a0" stroke="rgba(255,255,255,.16)"/><text x="675" y="481.3" text-anchor="middle" font-size="6.6" font-weight="700" fill="#2a2416">Academic Travel</text><text x="675" y="489.5" text-anchor="middle" font-size="6.6" font-weight="700" fill="#2a2416">Declaration</text></g><rect x="742" y="328" width="104" height="72" rx="8" fill="rgba(255,255,255,.025)" stroke="rgba(150,170,220,.35)"/><rect x="742" y="312" width="104" height="15" rx="5" fill="#16233f" stroke="rgba(120,150,220,.45)"/><text x="794" y="323" text-anchor="middle" font-size="8" font-weight="800" fill="#cdd9f5">Group I</text><g class="mod"><rect x="748" y="332" width="92" height="28" rx="6" fill="#2f6fed" stroke="rgba(255,255,255,.16)"/><text x="794" y="348.4" text-anchor="middle" font-size="6.6" font-weight="700" fill="#ffffff">Student Conduct</text></g><g class="mod"><rect x="748" y="364" width="92" height="28" rx="6" fill="#8a93a8" stroke="rgba(255,255,255,.16)"/><text x="794" y="376.3" text-anchor="middle" font-size="6.6" font-weight="700" fill="#0b1020">At-Risk Student</text><text x="794" y="384.5" text-anchor="middle" font-size="6.6" font-weight="700" fill="#0b1020">Mgmt</text></g><rect x="854" y="328" width="100" height="66" rx="8" fill="rgba(255,255,255,.025)" stroke="rgba(150,170,220,.35)"/><rect x="854" y="312" width="100" height="15" rx="5" fill="#16233f" stroke="rgba(120,150,220,.45)"/><text x="904" y="323" text-anchor="middle" font-size="8" font-weight="800" fill="#cdd9f5">Group J</text><g class="mod"><rect x="860" y="332" width="88" height="26" rx="6" fill="#2f6fed" stroke="rgba(255,255,255,.16)"/><text x="904" y="347.4" text-anchor="middle" font-size="6.6" font-weight="700" fill="#ffffff">Student Finance</text></g><g class="mod"><rect x="860" y="362" width="88" height="26" rx="6" fill="#a97c50" stroke="rgba(255,255,255,.16)"/><text x="904" y="377.4" text-anchor="middle" font-size="6.6" font-weight="700" fill="#ffffff">Financial Aid</text></g><rect x="962" y="328" width="156" height="146" rx="8" fill="rgba(255,255,255,.025)" stroke="rgba(150,170,220,.35)"/><rect x="962" y="312" width="156" height="15" rx="5" fill="#16233f" stroke="rgba(120,150,220,.45)"/><text x="1040" y="323" text-anchor="middle" font-size="8" font-weight="800" fill="#cdd9f5">Group K</text><g class="mod"><rect x="968" y="332" width="70" height="36" rx="6" fill="#2f6fed" stroke="rgba(255,255,255,.16)"/><text x="1003" y="352.4" text-anchor="middle" font-size="6.6" font-weight="700" fill="#ffffff">Term History</text></g><g class="mod"><rect x="1042" y="332" width="70" height="36" rx="6" fill="#2f6fed" stroke="rgba(255,255,255,.16)"/><text x="1077" y="352.4" text-anchor="middle" font-size="6.6" font-weight="700" fill="#ffffff">Exam Processing</text></g><g class="mod"><rect x="968" y="372" width="70" height="36" rx="6" fill="#2f6fed" stroke="rgba(255,255,255,.16)"/><text x="1003" y="388.3" text-anchor="middle" font-size="6.6" font-weight="700" fill="#ffffff">Special</text><text x="1003" y="396.5" text-anchor="middle" font-size="6.6" font-weight="700" fill="#ffffff">Considerations</text></g><g class="mod"><rect x="1042" y="372" width="70" height="36" rx="6" fill="#2f6fed" stroke="rgba(255,255,255,.16)"/><text x="1077" y="392.4" text-anchor="middle" font-size="6.6" font-weight="700" fill="#ffffff">S/U Declarations</text></g><g class="mod"><rect x="968" y="412" width="70" height="36" rx="6" fill="#2f6fed" stroke="rgba(255,255,255,.16)"/><text x="1003" y="428.3" text-anchor="middle" font-size="6.6" font-weight="700" fill="#ffffff">Review Results</text><text x="1003" y="436.5" text-anchor="middle" font-size="6.6" font-weight="700" fill="#ffffff">Requests</text></g><g class="mod"><rect x="1042" y="412" width="70" height="36" rx="6" fill="#d9c9a0" stroke="rgba(255,255,255,.16)"/><text x="1077" y="428.3" text-anchor="middle" font-size="6.6" font-weight="700" fill="#2a2416">Honors, Awards</text><text x="1077" y="436.5" text-anchor="middle" font-size="6.6" font-weight="700" fill="#2a2416">&amp; Achievements</text></g><rect x="1126" y="328" width="142" height="106" rx="8" fill="rgba(255,255,255,.025)" stroke="rgba(150,170,220,.35)"/><rect x="1126" y="312" width="142" height="15" rx="5" fill="#16233f" stroke="rgba(120,150,220,.45)"/><text x="1197" y="323" text-anchor="middle" font-size="8" font-weight="800" fill="#cdd9f5">Group M</text><g class="mod"><rect x="1132" y="332" width="64" height="42" rx="6" fill="#93c0f7" stroke="rgba(255,255,255,.16)"/><text x="1164" y="355.4" text-anchor="middle" font-size="6.6" font-weight="700" fill="#08122b">Graduation</text></g><g class="mod"><rect x="1200" y="332" width="64" height="42" rx="6" fill="#c9def8" stroke="rgba(255,255,255,.16)"/><text x="1232" y="351.3" text-anchor="middle" font-size="6.6" font-weight="700" fill="#08122b">Offboarding</text><text x="1232" y="359.5" text-anchor="middle" font-size="6.6" font-weight="700" fill="#08122b">Process</text></g><g class="mod"><rect x="1132" y="378" width="64" height="42" rx="6" fill="#2f6fed" stroke="rgba(255,255,255,.16)"/><text x="1164" y="397.3" text-anchor="middle" font-size="6.6" font-weight="700" fill="#ffffff">Generate Reports</text><text x="1164" y="405.5" text-anchor="middle" font-size="6.6" font-weight="700" fill="#ffffff">&amp; Letters</text></g><g class="mod"><rect x="1200" y="378" width="64" height="42" rx="6" fill="#c9def8" stroke="rgba(255,255,255,.16)"/><text x="1232" y="397.3" text-anchor="middle" font-size="6.6" font-weight="700" fill="#08122b">Degree Scroll</text><text x="1232" y="405.5" text-anchor="middle" font-size="6.6" font-weight="700" fill="#08122b">&amp; Transcript</text></g></g><g class="pp d6"><rect x="176" y="612" width="200" height="26" rx="8" fill="#8a93a8" stroke="rgba(255,255,255,.16)"/><text x="276" y="628.5" text-anchor="middle" font-size="8.6" font-weight="700" fill="#0b1020">Reports &amp; PS Query</text><rect x="392" y="612" width="200" height="26" rx="8" fill="#8a93a8" stroke="rgba(255,255,255,.16)"/><text x="492" y="628.5" text-anchor="middle" font-size="8.6" font-weight="700" fill="#0b1020">Student Service Portal</text><rect x="608" y="612" width="200" height="26" rx="8" fill="#8a93a8" stroke="rgba(255,255,255,.16)"/><text x="708" y="628.5" text-anchor="middle" font-size="8.6" font-weight="700" fill="#0b1020">Partner Portal</text><rect x="824" y="612" width="200" height="26" rx="8" fill="#8a93a8" stroke="rgba(255,255,255,.16)"/><text x="924" y="628.5" text-anchor="middle" font-size="8.6" font-weight="700" fill="#0b1020">AI Agent</text><rect x="1040" y="612" width="200" height="26" rx="8" fill="#8a93a8" stroke="rgba(255,255,255,.16)"/><text x="1140" y="628.5" text-anchor="middle" font-size="8.6" font-weight="700" fill="#0b1020">Service Indicator</text></g></svg>
+  </div>
+</section>
+
+<!-- ============ THE END-STATE · SCENARIO 1 CONVERGENCE ============ -->
+<section class="slide">
+  <span class="tag">Org Strategy</span><span class="pg"></span>
+  <div class="kick">Where the two orgs converge</div>
+  <h2>One destination: a single unified org</h2>
+  <p class="sub">Two orgs coexist to de-risk delivery, then converge phase by phase into one org with a full Learner + Student 360.</p>
+  <div class="fill">
+    <svg class="anim d2" width="1160" height="430" viewBox="0 0 1160 430" aria-hidden="true">
+      <defs>
+        <linearGradient id="uni4" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="rgba(52,211,153,.30)"/><stop offset="1" stop-color="rgba(34,211,238,.12)"/></linearGradient>
+        <marker id="m4" markerWidth="9" markerHeight="8" refX="8" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#22d3ee"/></marker>
+      </defs>
+
+      <!-- top bars: PartnerEDU refactoring (option 1) + legacy master -->
+      <g class="pp d2">
+        <rect x="286" y="6" width="438" height="26" rx="8" fill="rgba(167,139,250,.14)" stroke="rgba(167,139,250,.5)"/>
+        <text x="505" y="23" text-anchor="middle" font-size="11.5" font-weight="800" fill="#c9b6f5">PartnerEDU Refactoring (Option 1)</text>
+        <rect x="20" y="46" width="524" height="28" rx="8" fill="rgba(135,152,201,.14)" stroke="rgba(135,152,201,.5)"/>
+        <text x="282" y="64" text-anchor="middle" font-size="11.5" font-weight="800" fill="#c3cde8">Legacy SIS · master during transition</text>
+      </g>
+
+      <!-- columns (baseline bottom = 336) -->
+      <g text-anchor="middle">
+        <!-- C1 · Strategic Planning -->
+        <g class="pp d3">
+          <rect x="20" y="138" width="118" height="198" rx="13" fill="rgba(34,211,238,.06)" stroke="rgba(34,211,238,.45)"/>
+          <rect x="34" y="138" width="90" height="4" rx="2" fill="#22d3ee"/>
+          <text x="79" y="166" font-size="10" font-weight="800" letter-spacing=".12em" fill="#22d3ee">SPARKS</text>
+          <text x="79" y="192" font-size="14" font-weight="800" fill="#eef3ff">Strategic</text>
+          <text x="79" y="210" font-size="14" font-weight="800" fill="#eef3ff">Planning</text>
+          <g font-size="10.5" fill="#9fb2dd" font-weight="600">
+            <text x="79" y="242">Vision</text><text x="79" y="260">Governance</text><text x="79" y="278">Strategy</text><text x="79" y="296">Prioritization</text>
+          </g>
+        </g>
+        <!-- C2 · Architecture Foundation -->
+        <g class="pp d3">
+          <rect x="150" y="110" width="126" height="226" rx="13" fill="rgba(27,150,255,.08)" stroke="rgba(94,180,255,.5)"/>
+          <rect x="164" y="110" width="98" height="4" rx="2" fill="#5eb4ff"/>
+          <text x="213" y="140" font-size="13.5" font-weight="800" fill="#eef3ff">Architecture</text>
+          <text x="213" y="158" font-size="13.5" font-weight="800" fill="#eef3ff">Foundation</text>
+          <g font-size="10" fill="#a9c4ee" font-weight="600">
+            <text x="213" y="186">User-story-level</text><text x="213" y="202">definition for</text><text x="213" y="218">foundation build</text>
+            <text x="213" y="248">Architecture &amp;</text><text x="213" y="264">integration</text><text x="213" y="280">blueprints</text>
+          </g>
+        </g>
+        <!-- Cg · migrating module groups -->
+        <g class="pp d4" font-size="11" font-weight="700" fill="#cfe0fb">
+          <g><rect x="286" y="92" width="94" height="40" rx="9" fill="rgba(27,150,255,.1)" stroke="rgba(94,180,255,.45)"/><text x="333" y="116">Group A</text></g>
+          <g><rect x="286" y="152" width="94" height="40" rx="9" fill="rgba(27,150,255,.1)" stroke="rgba(94,180,255,.45)"/><text x="333" y="176">Group B</text></g>
+          <g><rect x="286" y="212" width="94" height="40" rx="9" fill="rgba(27,150,255,.1)" stroke="rgba(94,180,255,.45)"/><text x="333" y="236" font-size="14">…</text></g>
+          <g><rect x="286" y="272" width="94" height="40" rx="9" fill="rgba(27,150,255,.1)" stroke="rgba(94,180,255,.45)"/><text x="333" y="296">Group N</text></g>
+        </g>
+        <g class="pp d4" stroke="#5eb4ff" stroke-width="1.6" fill="none" marker-end="url(#m4)">
+          <path d="M382,112 L394,112"/><path d="M382,172 L394,172"/><path d="M382,232 L394,232"/><path d="M382,292 L394,292"/>
+        </g>
+        <!-- C3 · SPARKS Slave Build -->
+        <g class="pp d4">
+          <rect x="396" y="84" width="148" height="252" rx="13" fill="rgba(27,150,255,.12)" stroke="var(--brand)"/>
+          <rect x="410" y="84" width="120" height="4" rx="2" fill="#5eb4ff"/>
+          <text x="470" y="198" font-size="18" font-weight="800" fill="#eef3ff">SPARKS</text>
+          <text x="470" y="222" font-size="12.5" font-weight="800" fill="#8fc6ff">(Slave Build)</text>
+          <text x="470" y="248" font-size="10" font-weight="600" fill="#a9c4ee">builds behind the</text>
+          <text x="470" y="263" font-size="10" font-weight="600" fill="#a9c4ee">legacy master</text>
+        </g>
+        <!-- C4 · SPARKS EDU Core Foundation -->
+        <g class="pp d5">
+          <rect x="558" y="46" width="156" height="290" rx="13" fill="rgba(47,111,237,.16)" stroke="#2f6fed"/>
+          <rect x="572" y="46" width="128" height="4" rx="2" fill="#2f6fed"/>
+          <text x="636" y="166" font-size="16" font-weight="800" fill="#eef3ff">SPARKS</text>
+          <text x="636" y="190" font-size="12.5" font-weight="800" fill="#bcd4ff">Education Cloud</text>
+          <text x="636" y="208" font-size="12.5" font-weight="800" fill="#bcd4ff">Core Foundation</text>
+          <text x="636" y="236" font-size="10" font-weight="600" fill="#a9c4ee">becomes master</text>
+          <text x="636" y="251" font-size="10" font-weight="600" fill="#a9c4ee">at Phase 2</text>
+        </g>
+        <!-- C5 · PartnerEDU Refactoring (Option 2) -->
+        <g class="pp d5">
+          <rect x="728" y="6" width="150" height="330" rx="13" fill="rgba(167,139,250,.15)" stroke="#a78bfa"/>
+          <rect x="742" y="6" width="122" height="4" rx="2" fill="#a78bfa"/>
+          <text x="803" y="150" font-size="15" font-weight="800" fill="#eef3ff">PartnerEDU</text>
+          <text x="803" y="172" font-size="12.5" font-weight="800" fill="#d5c7fb">Refactoring</text>
+          <text x="803" y="190" font-size="12.5" font-weight="800" fill="#d5c7fb">(Option 2)</text>
+          <text x="803" y="220" font-size="10" font-weight="600" fill="#c0b0e8">pre-matriculation org</text>
+        </g>
+        <!-- C6 · Single Unified Org (destination) -->
+        <g class="pp d6">
+          <rect x="892" y="6" width="196" height="330" rx="14" fill="url(#uni4)" stroke="#34d399" stroke-width="2.4"/>
+          <rect x="892" y="6" width="196" height="330" rx="14" fill="none" stroke="#34d399"><animate attributeName="opacity" values=".25;.8;.25" dur="3.2s" repeatCount="indefinite"/></rect>
+          <text x="990" y="112" font-size="14" font-weight="800" fill="#ffffff">SPARKS + PartnerEDU</text>
+          <text x="990" y="138" font-size="15" font-weight="800" fill="#34d399">Single Unified Org</text>
+          <line x1="916" y1="158" x2="1064" y2="158" stroke="rgba(52,211,153,.4)"/>
+          <text x="990" y="188" font-size="13.5" font-weight="800" fill="#7be0a0">Full Learner 360</text>
+          <text x="990" y="210" font-size="13.5" font-weight="800" fill="#7be0a0">+ Student 360</text>
+          <text x="990" y="240" font-size="10" font-weight="600" fill="#9fb2dd">one authoritative record</text>
+        </g>
+      </g>
+
+      <!-- phase band -->
+      <g class="pp d6" text-anchor="middle" font-size="11" font-weight="800">
+        <rect x="20" y="350" width="118" height="32" rx="10" fill="rgba(34,211,238,.1)" stroke="rgba(34,211,238,.45)"/><text x="79" y="370" fill="#7fe6f5">Phase 0 · Contract 1</text>
+        <rect x="150" y="350" width="394" height="32" rx="10" fill="rgba(27,150,255,.1)" stroke="rgba(94,180,255,.45)"/><text x="347" y="370" fill="#9fc9ff">Phase 1 · Contract 2</text>
+        <rect x="558" y="350" width="156" height="32" rx="10" fill="rgba(47,111,237,.16)" stroke="rgba(47,111,237,.55)"/><text x="636" y="370" fill="#bcd4ff">Phase 2 · Contract 2</text>
+        <rect x="728" y="350" width="150" height="32" rx="10" fill="rgba(167,139,250,.15)" stroke="rgba(167,139,250,.55)"/><text x="803" y="370" fill="#d5c7fb">Phase 3+</text>
+        <rect x="892" y="350" width="196" height="32" rx="10" fill="rgba(52,211,153,.12)" stroke="rgba(52,211,153,.5)"/><text x="990" y="370" fill="#7be0a0">Final · one org</text>
+      </g>
+      <!-- org keywords -->
+      <g class="pp d6">
+        <rect x="20" y="396" width="530" height="28" rx="9" fill="rgba(47,111,237,.16)" stroke="rgba(47,111,237,.55)"/>
+        <circle cx="40" cy="410" r="4" fill="#2f6fed"/>
+        <text x="54" y="414" font-size="10.5" font-weight="700" fill="#cfe0fb"><tspan font-weight="800" fill="#8fc6ff">SPARKS</tspan>  ·  post-matriculation  ·  verified student data (after admission)</text>
+        <rect x="562" y="396" width="526" height="28" rx="9" fill="rgba(167,139,250,.08)" stroke="rgba(167,139,250,.4)"/>
+        <circle cx="582" cy="410" r="4" fill="#a78bfa"/>
+        <text x="596" y="414" font-size="10.5" font-weight="700" fill="#cfe0fb"><tspan font-weight="800" fill="#c9b6f5">PartnerEDU</tspan>  ·  pre-matriculation  ·  unverified applicant data</text>
+      </g>
+    </svg>
+  </div>
+</section>
+
+<!-- ============ INTEGRATION SOLUTION ============ -->
+<section class="slide">
+  <span class="tag">Integration</span><span class="pg"></span>
+  <div class="kick">Build once, consume many times</div>
+  <h2>One spine. 140+ systems. No big bang.</h2>
+  <div class="fill">
+    <div class="intg">
+      <div class="istats anim d2">
+        <div class="istat"><b>140+</b><span>satellite systems on the legacy SIS today</span></div>
+        <div class="istat"><b>~83%</b><span>of flows already brokered by Boomi ESB</span></div>
+        <div class="istat"><b>~98%</b><span>of traffic over HTTPS / REST</span></div>
+        <div class="istat"><b>60:38</b><span>synchronous request-reply vs async batch</span></div>
+      </div>
+      <div class="ilayers">
+        <div class="ilayer pp d3"><span class="ilab">Experience APIs</span><span class="idesc">Shape data per consumer - student &amp; partner portals, uNivUS, faculty apps. <em>Read contracts preserved, so consumers never break.</em></span></div>
+        <div class="ilayer hot pp d4"><span class="ilab">Process APIs</span><span class="idesc">Orchestrate business logic in Boomi - "Admit Applicant", "Register", "Post Grades". <em>This is where legacy-vs-SPARKS routing lives - the SIS is swapped underneath, invisibly.</em></span></div>
+        <div class="ilayer pp d5"><span class="ilab">System APIs</span><span class="idesc">Expose each source cleanly - SPARKS, the legacy SIS, IMMS (final grade only), CMIS / CMS - behind a stable gateway.</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="mini anim d6"><span><b>API Gateway</b> fronts every layer</span><span><b>Azure AI Gateway</b> = single governed MCP / A2A door for agents</span><span>Phase 1 re-points admissions, Campus Community &amp; Student Records first</span></div>
+</section>
+
+<!-- ============ DATA & REPORTING SOLUTION ============ -->
+<section class="slide">
+  <span class="tag">Data &amp; Reporting</span><span class="pg"></span>
+  <div class="kick">One trusted 360 · governed end to end</div>
+  <h2>Five tiers of reporting. One security spine.</h2>
+  <div class="fill">
+    <div class="drp">
+      <div class="tiers anim d2">
+        <div class="tier pp d2"><span class="tn">Tier 1 · Operational</span><span class="tt">Report + Dashboard + DocGen</span><span class="tp">Serves all 239 custom reports; transcripts &amp; scrolls, holds-aware.</span></div>
+        <div class="tier pp d3"><span class="tn">Tier 2 · Self-service</span><span class="tt">Tableau Next query</span><span class="tp">Governed ad-hoc drag-and-drop - replaces legacy PS Queries.</span></div>
+        <div class="tier pp d4"><span class="tn">Tier 3 · Dashboards</span><span class="tt">Tableau Next</span><span class="tp">Templated analytics for operations, advising, admissions.</span></div>
+        <div class="tier pp d5"><span class="tn">Tier 4 · Proactive</span><span class="tt">Tableau Next alerts</span><span class="tp">Threshold monitoring, e.g. at-risk students, routed to action.</span></div>
+        <div class="tier pp d6"><span class="tn">Tier 5 · Agentic</span><span class="tt">Agentforce</span><span class="tp">Conversational, natural-language querying over the semantic model.</span></div>
+      </div>
+      <div class="spine2 anim d6">
+        <span class="sp-t">Security spine</span>
+        <div class="sp-chain">
+          <span class="sp-node"><b>Education Cloud <em>RBAC</em></b><span>system of record</span></span>
+          <span class="sp-arr">→</span>
+          <span class="sp-node"><b>Data 360 <em>ABAC</em></b><span>AI grounding · Zero Copy</span></span>
+          <span class="sp-arr">→</span>
+          <span class="sp-node"><b>Rosetta / Fabric <em>RLS</em></b><span>cross-domain lakehouse</span></span>
+        </div>
+        <span class="sp-note"><b>Near-real-time</b> sync &lt; 10 min · no second physical copy</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 9 · TRUSTED AI ============ -->
+<section class="slide">
+  <span class="tag">Trusted AI</span><span class="pg"></span>
+  <div class="kick">Three AI patterns, one trust layer</div>
+  <h2>Trust first. Intelligence second.</h2>
+  <div class="fill">
+    <svg class="anim d2" viewBox="0 0 1040 452" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%" aria-hidden="true">
+      <defs>
+        <linearGradient id="trustG" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#93c5fd"/><stop offset="100%" stop-color="#1d4ed8"/></linearGradient>
+        <marker id="ad9" markerWidth="9" markerHeight="8" refX="8" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#22d3ee"/></marker>
+        <marker id="ad9v" markerWidth="9" markerHeight="8" refX="8" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#a78bfa"/></marker>
+        <marker id="ad9i" markerWidth="9" markerHeight="8" refX="8" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#3b82f6"/></marker>
+      </defs>
+
+      <!-- LEGEND · three AI solution patterns -->
+      <g class="pp d2" text-anchor="middle" font-weight="800">
+        <rect x="40" y="0" width="300" height="30" rx="9" fill="rgba(254,147,57,.12)" stroke="var(--amber)"/>
+        <circle cx="66" cy="15" r="5" fill="#fbbf24"/><text x="196" y="19" font-size="11" fill="#fcd9a6">Super Agent · orchestrates sub-agents</text>
+        <rect x="372" y="0" width="296" height="30" rx="9" fill="rgba(52,211,153,.1)" stroke="var(--emerald)"/>
+        <circle cx="398" cy="15" r="5" fill="#34d399"/><text x="524" y="19" font-size="11" fill="#c7f7df">Autonomous Agent · runs unattended</text>
+        <rect x="700" y="0" width="300" height="30" rx="9" fill="rgba(34,211,238,.1)" stroke="rgba(34,211,238,.55)"/>
+        <circle cx="726" cy="15" r="5" fill="#22d3ee"/><text x="856" y="19" font-size="11" fill="#c7f2fb">Human-in-the-loop · person approves</text>
+      </g>
+
+      <!-- ROW 0 · access layer: human-in-the-loop (left) + external-agent A2A access (right) -->
+      <g class="pp d3">
+        <rect x="24" y="42" width="654" height="34" rx="9" fill="rgba(34,211,238,.1)" stroke="rgba(34,211,238,.45)"/>
+        <circle cx="50" cy="57" r="4.5" fill="#22d3ee"/><path d="M42,68 a8,8 0 0,1 16,0" fill="none" stroke="#22d3ee" stroke-width="1.6"/>
+        <text x="366" y="63" text-anchor="middle" font-size="11.5" font-weight="800" fill="#c7f2fb">Human-in-the-loop · every consequential decision routes through a person</text>
+        <rect x="696" y="42" width="320" height="34" rx="9" fill="rgba(167,139,250,.12)" stroke="rgba(167,139,250,.55)"/>
+        <text x="856" y="58" text-anchor="middle" font-size="11" font-weight="800" fill="#d5c7fb">External agent → A2A protocol → Agentforce</text>
+        <text x="856" y="71" text-anchor="middle" font-size="8.6" font-weight="600" fill="#b9a9e6">governed agent-to-agent access</text>
+      </g>
+      <g class="flowline" fill="none">
+        <path d="M183,76 L183,86" stroke="rgba(34,211,238,.5)" stroke-width="1.6" marker-end="url(#ad9)"/>
+        <path d="M519,76 L519,86" stroke="rgba(34,211,238,.5)" stroke-width="1.6" marker-end="url(#ad9)"/>
+        <path d="M856,76 L856,86" stroke="rgba(167,139,250,.55)" stroke-width="1.6" marker-end="url(#ad9v)"/>
+      </g>
+
+      <!-- ROW 1 · three super agents -->
+      <g class="pp d3" text-anchor="middle" fill="#fff">
+        <rect x="24" y="88" width="318" height="54" rx="13" fill="rgba(254,147,57,.14)" stroke="var(--amber)"/><text x="183" y="112" font-size="12.5" font-weight="800" fill="#fcd9a6">Learner Journey · Self-Service</text><text x="183" y="130" font-size="10.5" fill="#b8c6ee">Super Agent</text>
+        <rect x="360" y="88" width="318" height="54" rx="13" fill="rgba(254,147,57,.14)" stroke="var(--amber)"/><text x="519" y="112" font-size="12.5" font-weight="800" fill="#fcd9a6">Operation Support</text><text x="519" y="130" font-size="10.5" fill="#b8c6ee">Super Agent · staff copilot</text>
+        <rect x="696" y="88" width="320" height="54" rx="13" fill="rgba(254,147,57,.14)" stroke="var(--amber)"/><text x="856" y="112" font-size="12.5" font-weight="800" fill="#fcd9a6">AI Access</text><text x="856" y="130" font-size="10.5" fill="#b8c6ee">Super Agent · governed BYO-LLM</text>
+      </g>
+      <g stroke="rgba(59,130,246,.55)" stroke-width="1.6" class="flowline" marker-end="url(#ad9i)" fill="none">
+        <path d="M183,142 L183,152"/><path d="M519,142 L519,152"/><path d="M856,142 L856,152"/>
+      </g>
+
+      <!-- ROW 2 · trust gate (all calls pass through) -->
+      <g class="pp d4">
+        <rect x="24" y="154" width="992" height="42" rx="10" fill="rgba(59,130,246,.15)" stroke="#3b82f6"/>
+        <rect x="24" y="154" width="992" height="42" rx="10" fill="none" stroke="#60a5fa"><animate attributeName="opacity" values=".25;.85;.25" dur="2.6s" repeatCount="indefinite"/></rect>
+        <path d="M48,162 L64,168 L64,180 C64,187 56,191 48,194 C40,191 32,187 32,180 L32,168 Z" fill="url(#trustG)"/>
+        <text x="88" y="172" font-size="12" font-weight="800" fill="#93c5fd">Einstein Trust Layer</text><text x="88" y="187" font-size="10" fill="#bcd3f7">gates every model call</text>
+        <g text-anchor="middle" font-size="9.5" font-weight="700" fill="#c6d9f7">
+          <text x="380" y="171">Secure retrieval</text><text x="380" y="185">Dynamic grounding</text>
+          <text x="560" y="171">Data masking</text><text x="560" y="185">Toxicity detection</text>
+          <text x="740" y="171">Audit trail</text><text x="740" y="185">Zero data retention</text>
+          <text x="930" y="178">Human-in-the-loop</text>
+        </g>
+      </g>
+      <g stroke="rgba(59,130,246,.55)" stroke-width="1.6" class="flowline" marker-end="url(#ad9i)" fill="none">
+        <path d="M183,196 L183,206"/><path d="M519,196 L519,206"/><path d="M856,196 L856,206"/>
+      </g>
+
+      <!-- ROW 3 · shared LEGO sub-agent pool (plug in / plug out) -->
+      <g class="pp d5" text-anchor="middle">
+        <rect x="24" y="208" width="318" height="176" rx="12" fill="rgba(34,211,238,.05)" stroke="rgba(34,211,238,.28)"/>
+        <rect x="360" y="208" width="318" height="176" rx="12" fill="rgba(34,211,238,.05)" stroke="rgba(34,211,238,.28)"/>
+        <rect x="696" y="208" width="320" height="176" rx="12" fill="rgba(34,211,238,.05)" stroke="rgba(34,211,238,.28)"/>
+        <text x="183" y="228" font-size="9.5" font-weight="800" fill="#7fd8e8" letter-spacing=".1em">LEGO SUB-AGENTS · PLUG IN / OUT</text>
+        <text x="519" y="228" font-size="9.5" font-weight="800" fill="#7fd8e8" letter-spacing=".1em">LEGO SUB-AGENTS · PLUG IN / OUT</text>
+        <text x="856" y="228" font-size="9.5" font-weight="800" fill="#7fd8e8" letter-spacing=".1em">LEGO SUB-AGENTS · PLUG IN / OUT</text>
+        <g font-size="10.5" font-weight="700" fill="#dbe4fb">
+          <!-- col1 lego bricks -->
+          <g><circle cx="81" cy="241" r="4" fill="rgba(34,211,238,.55)"/><circle cx="133" cy="241" r="4" fill="rgba(34,211,238,.55)"/><rect x="36" y="244" width="142" height="54" rx="7" fill="rgba(34,211,238,.09)" stroke="rgba(34,211,238,.35)"/><text x="107" y="275">Course Enrolment</text></g>
+          <g><circle cx="231" cy="241" r="4" fill="rgba(34,211,238,.55)"/><circle cx="283" cy="241" r="4" fill="rgba(34,211,238,.55)"/><rect x="186" y="244" width="142" height="54" rx="7" fill="rgba(34,211,238,.09)" stroke="rgba(34,211,238,.35)"/><text x="257" y="275">Transfer Credit</text></g>
+          <g><circle cx="81" cy="313" r="4" fill="rgba(34,211,238,.55)"/><circle cx="133" cy="313" r="4" fill="rgba(34,211,238,.55)"/><rect x="36" y="316" width="142" height="54" rx="7" fill="rgba(34,211,238,.09)" stroke="rgba(34,211,238,.35)"/><text x="107" y="347">Leave of Absence</text></g>
+          <g><circle cx="231" cy="313" r="4" fill="rgba(34,211,238,.55)"/><circle cx="283" cy="313" r="4" fill="rgba(34,211,238,.55)"/><rect x="186" y="316" width="142" height="54" rx="7" fill="rgba(34,211,238,.09)" stroke="rgba(34,211,238,.35)"/><text x="257" y="347">Financial Aid</text></g>
+          <!-- col2 lego bricks -->
+          <g><circle cx="417" cy="241" r="4" fill="rgba(34,211,238,.55)"/><circle cx="469" cy="241" r="4" fill="rgba(34,211,238,.55)"/><rect x="372" y="244" width="142" height="54" rx="7" fill="rgba(34,211,238,.09)" stroke="rgba(34,211,238,.35)"/><text x="443" y="275">Case Summary</text></g>
+          <g><circle cx="567" cy="241" r="4" fill="rgba(34,211,238,.55)"/><circle cx="619" cy="241" r="4" fill="rgba(34,211,238,.55)"/><rect x="522" y="244" width="142" height="54" rx="7" fill="rgba(34,211,238,.09)" stroke="rgba(34,211,238,.35)"/><text x="593" y="275" font-size="9.6">AS Data Validation</text></g>
+          <g><circle cx="417" cy="313" r="4" fill="rgba(34,211,238,.55)"/><circle cx="469" cy="313" r="4" fill="rgba(34,211,238,.55)"/><rect x="372" y="316" width="142" height="54" rx="7" fill="rgba(34,211,238,.09)" stroke="rgba(34,211,238,.35)"/><text x="443" y="347">SSG Grant Config</text></g>
+          <g><circle cx="567" cy="313" r="4" fill="rgba(34,211,238,.55)"/><circle cx="619" cy="313" r="4" fill="rgba(34,211,238,.55)"/><rect x="522" y="316" width="142" height="54" rx="7" fill="rgba(34,211,238,.09)" stroke="rgba(34,211,238,.35)"/><text x="593" y="347">NCD Progression</text></g>
+          <!-- col3 lego bricks -->
+          <g><circle cx="754" cy="241" r="4" fill="rgba(34,211,238,.55)"/><circle cx="806" cy="241" r="4" fill="rgba(34,211,238,.55)"/><rect x="708" y="244" width="144" height="54" rx="7" fill="rgba(34,211,238,.09)" stroke="rgba(34,211,238,.35)"/><text x="780" y="275">BYO-LLM (RBAC)</text></g>
+          <g><circle cx="904" cy="241" r="4" fill="rgba(34,211,238,.55)"/><circle cx="956" cy="241" r="4" fill="rgba(34,211,238,.55)"/><rect x="858" y="244" width="144" height="54" rx="7" fill="rgba(34,211,238,.09)" stroke="rgba(34,211,238,.35)"/><text x="930" y="275">BYO-harness</text></g>
+          <g><circle cx="754" cy="313" r="4" fill="rgba(34,211,238,.55)"/><circle cx="806" cy="313" r="4" fill="rgba(34,211,238,.55)"/><rect x="708" y="316" width="144" height="54" rx="7" fill="rgba(34,211,238,.09)" stroke="rgba(34,211,238,.35)"/><text x="780" y="347">Agentforce MCP</text></g>
+          <g><circle cx="904" cy="313" r="4" fill="rgba(34,211,238,.55)"/><circle cx="956" cy="313" r="4" fill="rgba(34,211,238,.55)"/><rect x="858" y="316" width="144" height="54" rx="7" fill="rgba(34,211,238,.09)" stroke="rgba(34,211,238,.35)"/><text x="930" y="347" font-size="9.6">Data 360 MCP (ABAC)</text></g>
+        </g>
+      </g>
+      <g class="flowline" fill="none">
+        <path d="M183,384 L183,394" stroke="rgba(52,211,153,.55)" stroke-width="1.6" marker-end="url(#ad9)"/>
+        <path d="M519,384 L519,394" stroke="rgba(52,211,153,.55)" stroke-width="1.6" marker-end="url(#ad9)"/>
+        <path d="M894,384 L894,394" stroke="rgba(251,113,133,.55)" stroke-width="1.6" stroke-dasharray="4 4" marker-end="url(#ad9)"/>
+      </g>
+
+      <!-- ROW 4 · autonomous backend agents + escalation -->
+      <g class="pp d6" text-anchor="middle" font-size="10.5" font-weight="700" fill="#c7f7df">
+        <rect x="24" y="396" width="736" height="44" rx="11" fill="rgba(52,211,153,.1)" stroke="var(--emerald)"/>
+        <circle cx="50" cy="418" r="8" fill="none" stroke="#34d399" stroke-width="1.6"/><circle cx="50" cy="418" r="2.6" fill="#34d399"/>
+        <text x="156" y="422" font-size="11.5" font-weight="800" fill="#34d399">Autonomous backend</text>
+        <text x="340" y="422">Proactive nudges</text><text x="490" y="422">Data validation</text><text x="640" y="422">Exam processing</text>
+        <rect x="772" y="396" width="244" height="44" rx="11" fill="rgba(251,113,133,.1)" stroke="var(--rose)"/>
+        <path d="M794,424 L802,408 L810,424 Z" fill="none" stroke="#fb7185" stroke-width="1.6"/><text x="802" y="421" font-size="10" font-weight="800" fill="#fb7185">!</text>
+        <text x="908" y="414" font-size="10.5" font-weight="800" fill="#fca5b4">Escalation path</text><text x="908" y="430" font-size="9.5" fill="#f3b6c0">low confidence → human review</text>
+      </g>
+    </svg>
+  </div>
+  <div class="mini anim d6"><span><b>Grounded</b> · own data</span><span><b>Gated</b> · every call</span><span><b>Human-in-the-loop</b></span><span><b>Inherits</b> security</span></div>
+</section>
+
+<!-- ============ SOLUTION ON ONE BOARD ============ -->
+<section class="slide">
+  <span class="tag">Delivery Strategy</span><span class="pg"></span>
+  <div class="kick">One board</div>
+  <h2>Two orgs. One experience.</h2>
+  <div class="fill">
+    <svg class="anim d2" width="1080" height="336" viewBox="0 0 1080 336" aria-hidden="true">
+      <defs>
+        <linearGradient id="spine7" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#22d3ee"/><stop offset="100%" stop-color="#1b96ff"/></linearGradient>
+        <linearGradient id="orionG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(52,211,153,.16)"/><stop offset="100%" stop-color="rgba(52,211,153,.03)"/></linearGradient>
+        <linearGradient id="gwG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(27,150,255,.16)"/><stop offset="100%" stop-color="rgba(27,150,255,.03)"/></linearGradient>
+        <marker id="ad7" markerWidth="9" markerHeight="8" refX="8" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#22d3ee"/></marker>
+      </defs>
+      <!-- integration spine -->
+      <g class="pp d2">
+        <rect x="30" y="4" width="1020" height="32" rx="9" fill="url(#spine7)" opacity=".92"/>
+        <text x="540" y="25" text-anchor="middle" font-size="12.5" font-weight="800" fill="#03121f">Boomi ESB  +  Azure API Gateway - one integration spine (~83% of flows)</text>
+      </g>
+      <!-- feed arrows into both orgs -->
+      <g stroke="#22d3ee" stroke-width="2" class="flowline" opacity=".65" marker-end="url(#ad7)" fill="none">
+        <path d="M175,37 L175,74"/><path d="M360,37 L360,74"/><path d="M720,37 L720,74"/><path d="M905,37 L905,74"/>
+      </g>
+      <!-- LEFT: SPARKS -->
+      <g class="pp d3">
+        <rect x="30" y="78" width="470" height="212" rx="16" fill="url(#orionG)" stroke="var(--emerald)"/>
+        <text x="46" y="99" font-size="15" font-weight="800" fill="#34d399">SPARKS</text>
+        <text x="490" y="99" text-anchor="end" font-size="11" fill="#9fe8cf">new org · post-matriculation</text>
+      </g>
+      <g class="pp d3" text-anchor="middle" font-weight="700" fill="#eef3ff">
+        <g class="node" data-id="o-agent"><rect x="42" y="110" width="212" height="42" rx="10" fill="rgba(251,191,36,.12)" stroke="rgba(251,191,36,.45)"/><text x="148" y="128" font-size="12">Agentforce</text><text x="148" y="144" font-size="10" fill="#f6d488">super + sub agents</text></g>
+        <g class="node" data-id="o-exp"><rect x="266" y="110" width="222" height="42" rx="10" fill="rgba(34,211,238,.1)" stroke="rgba(34,211,238,.45)"/><text x="377" y="128" font-size="12">Experience Cloud</text><text x="377" y="144" font-size="10" fill="#9be4f2">student portal</text></g>
+        <g class="node" data-id="o-data"><rect x="42" y="158" width="446" height="30" rx="9" fill="rgba(167,139,250,.14)" stroke="rgba(167,139,250,.5)"/><text x="265" y="178" font-size="12">Data 360</text></g>
+      </g>
+      <g class="pp d3" text-anchor="middle" font-size="10.5" font-weight="700" fill="#cbd6f5">
+        <g class="node" data-id="o-rec"><rect x="42" y="194" width="144" height="40" rx="9" fill="rgba(255,255,255,.05)" stroke="var(--line)"/><text x="114" y="212">Student</text><text x="114" y="227">Records</text></g>
+        <g class="node" data-id="o-crs"><rect x="192" y="194" width="144" height="40" rx="9" fill="rgba(255,255,255,.05)" stroke="var(--line)"/><text x="264" y="212">Course</text><text x="264" y="227">Registration</text></g>
+        <g class="node" data-id="o-fin"><rect x="342" y="194" width="146" height="40" rx="9" fill="rgba(255,255,255,.05)" stroke="var(--line)"/><text x="415" y="212">Student</text><text x="415" y="227">Finance</text></g>
+        <g class="node" data-id="o-exam"><rect x="42" y="240" width="219" height="34" rx="9" fill="rgba(52,211,153,.08)" stroke="rgba(52,211,153,.3)"/><text x="151" y="261">Exam processing</text></g>
+        <g class="node" data-id="o-pm"><rect x="269" y="240" width="219" height="34" rx="9" fill="rgba(52,211,153,.08)" stroke="rgba(52,211,153,.3)"/><text x="378" y="261">Post-matriculation data</text></g>
+      </g>
+      <!-- RIGHT: PartnerEDU -->
+      <g class="pp d4">
+        <rect x="580" y="78" width="470" height="212" rx="16" fill="url(#gwG)" stroke="var(--brand)"/>
+        <text x="596" y="99" font-size="15" font-weight="800" fill="#5eb4ff">PartnerEDU</text>
+        <text x="1038" y="99" text-anchor="end" font-size="11" fill="#a9cdf5">existing org · pre-matriculation</text>
+      </g>
+      <g class="pp d4" text-anchor="middle" font-weight="700" fill="#eef3ff">
+        <g class="node" data-id="g-exp"><rect x="592" y="110" width="222" height="42" rx="10" fill="rgba(34,211,238,.1)" stroke="rgba(34,211,238,.45)"/><text x="703" y="128" font-size="12">Experience Cloud</text><text x="703" y="144" font-size="10" fill="#9be4f2">applicant portal</text></g>
+        <g class="node" data-id="g-agent"><rect x="826" y="110" width="212" height="42" rx="10" fill="rgba(251,191,36,.12)" stroke="rgba(251,191,36,.45)"/><text x="932" y="128" font-size="12">Agentforce</text><text x="932" y="144" font-size="10" fill="#f6d488">super + sub agents</text></g>
+        <g class="node" data-id="g-data"><rect x="592" y="158" width="446" height="30" rx="9" fill="rgba(167,139,250,.14)" stroke="rgba(167,139,250,.5)"/><text x="815" y="178" font-size="12">Data 360</text></g>
+      </g>
+      <g class="pp d4" text-anchor="middle" font-size="10.5" font-weight="700" fill="#cbd6f5">
+        <g class="node" data-id="g-mkt"><rect x="592" y="194" width="144" height="40" rx="9" fill="rgba(255,255,255,.05)" stroke="var(--line)"/><text x="664" y="212">Sales &amp;</text><text x="664" y="227">Marketing</text></g>
+        <g class="node" data-id="g-lead"><rect x="742" y="194" width="144" height="40" rx="9" fill="rgba(255,255,255,.05)" stroke="var(--line)"/><text x="814" y="212">Lead &amp;</text><text x="814" y="227">Opportunity</text></g>
+        <g class="node" data-id="g-onb"><rect x="892" y="194" width="146" height="40" rx="9" fill="rgba(255,255,255,.05)" stroke="var(--line)"/><text x="965" y="217">Onboarding</text></g>
+        <g class="node" data-id="g-pm"><rect x="592" y="240" width="219" height="34" rx="9" fill="rgba(27,150,255,.08)" stroke="rgba(27,150,255,.3)"/><text x="701" y="261">Pre-matriculation data</text></g>
+        <g class="node" data-id="g-ppa"><rect x="819" y="240" width="219" height="34" rx="9" fill="rgba(27,150,255,.08)" stroke="rgba(27,150,255,.3)"/><text x="928" y="261">Program plan &amp; advisement</text></g>
+      </g>
+      <!-- center connectors: SSO (experience) + Zero Copy (data) -->
+      <g class="pp d5" text-anchor="middle" font-weight="800">
+        <line x1="490" y1="131" x2="590" y2="131" stroke="#22d3ee" stroke-width="2" class="flowline"/>
+        <rect x="497" y="115" width="86" height="32" rx="16" fill="rgba(34,211,238,.16)" stroke="#22d3ee"/><text x="540" y="128" font-size="10.5" fill="#c7f2fb">Unified</text><text x="540" y="140" font-size="10.5" fill="#c7f2fb">SSO</text>
+        <line x1="488" y1="173" x2="592" y2="173" stroke="#a78bfa" stroke-width="2" stroke-dasharray="5 5"><animate attributeName="stroke-dashoffset" values="20;0" dur="1s" repeatCount="indefinite"/></line>
+        <rect x="497" y="157" width="86" height="32" rx="10" fill="rgba(167,139,250,.18)" stroke="#a78bfa"/><text x="540" y="170" font-size="10.5" fill="#d9ccff">Zero</text><text x="540" y="182" font-size="10.5" fill="#d9ccff">Copy</text>
+      </g>
+      <!-- footer -->
+      <g class="pp d6">
+        <text x="540" y="312" text-anchor="middle" font-size="11.5" font-weight="700" fill="#8fa3d8">Legacy on-premise SIS stays master through the one-year transition  →  SPARKS becomes master at Phase 2</text>
+      </g>
+    </svg>
+  </div>
+  <div class="mini anim d6"><span>the org topology is an <b>implementation detail</b> - never a student's problem</span></div>
+</section>
+
+<!-- ============ 8 · LAYERED ARCHITECTURE ============ -->
+<section class="slide">
+  <span class="tag">Architecture</span><span class="pg"></span>
+  <div class="kick">On-premise → cloud · the end-to-end landscape</div>
+  <h2>Seven layers, each with one job</h2>
+  <div class="fill">
+    <svg class="anim d2" width="1060" height="392" viewBox="0 0 1060 392" aria-hidden="true">
+      <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="rgba(255,255,255,.08)"/><stop offset="100%" stop-color="rgba(255,255,255,.02)"/></linearGradient></defs>
+      <!-- vertical data pulse threading every layer -->
+      <line x1="540" y1="6" x2="540" y2="366" stroke="rgba(34,211,238,.22)" stroke-width="2"/>
+      <g font-weight="700" text-anchor="middle" fill="#dbe4fb">
+        <!-- 1 EXPERIENCE -->
+        <g class="pp d2"><g class="node" data-id="l-exp">
+          <rect x="20" y="6" width="120" height="46" rx="10" fill="rgba(34,211,238,.14)" stroke="var(--cyan)"/><text x="80" y="33" font-size="11" font-weight="800" fill="#22d3ee">EXPERIENCE</text>
+          <rect x="148" y="6" width="892" height="46" rx="10" fill="url(#lg)" stroke="rgba(34,211,238,.35)"/>
+          <rect x="166" y="15" width="270" height="28" rx="7" fill="rgba(34,211,238,.08)" stroke="rgba(34,211,238,.3)"/><text x="301" y="33" font-size="11.5">Student portal</text>
+          <rect x="450" y="15" width="270" height="28" rx="7" fill="rgba(34,211,238,.08)" stroke="rgba(34,211,238,.3)"/><text x="585" y="33" font-size="11.5">Partner portal (examiners)</text>
+          <rect x="734" y="15" width="270" height="28" rx="7" fill="rgba(34,211,238,.08)" stroke="rgba(34,211,238,.3)"/><text x="869" y="33" font-size="11.5">uNivUS landing</text>
+        </g></g>
+        <!-- 2 AGENTS -->
+        <g class="pp d3"><g class="node" data-id="l-agents">
+          <rect x="20" y="58" width="120" height="46" rx="10" fill="rgba(251,191,36,.14)" stroke="var(--amber)"/><text x="80" y="85" font-size="11" font-weight="800" fill="#fbbf24">AGENTS</text>
+          <rect x="148" y="58" width="892" height="46" rx="10" fill="url(#lg)" stroke="rgba(251,191,36,.35)"/>
+          <rect x="166" y="67" width="270" height="28" rx="7" fill="rgba(251,191,36,.08)" stroke="rgba(251,191,36,.3)"/><text x="301" y="85" font-size="11.5">Agentforce · 3 super agents</text>
+          <rect x="450" y="67" width="270" height="28" rx="7" fill="rgba(251,191,36,.08)" stroke="rgba(251,191,36,.3)"/><text x="585" y="85" font-size="11.5">Einstein Trust Layer</text>
+          <rect x="734" y="67" width="270" height="28" rx="7" fill="rgba(251,191,36,.08)" stroke="rgba(251,191,36,.3)"/><text x="869" y="85" font-size="11.5">Unified SSO</text>
+        </g></g>
+        <!-- 3 SIS APPS -->
+        <g class="pp d4"><g class="node" data-id="l-sis">
+          <rect x="20" y="110" width="120" height="46" rx="10" fill="rgba(94,180,255,.14)" stroke="var(--brand)"/><text x="80" y="137" font-size="11" font-weight="800" fill="#5eb4ff">SIS APPS</text>
+          <rect x="148" y="110" width="892" height="46" rx="10" fill="url(#lg)" stroke="rgba(94,180,255,.35)"/>
+          <rect x="166" y="119" width="270" height="28" rx="7" fill="rgba(251,113,133,.08)" stroke="rgba(251,113,133,.4)" stroke-dasharray="4 4"/><text x="301" y="137" font-size="11.5" fill="#fca5b4">Legacy on-prem SIS · retiring 2028</text>
+          <rect x="450" y="119" width="270" height="28" rx="7" fill="rgba(52,211,153,.08)" stroke="rgba(52,211,153,.35)"/><text x="585" y="137" font-size="11.5">SPARKS · post-matriculation</text>
+          <rect x="734" y="119" width="270" height="28" rx="7" fill="rgba(94,180,255,.08)" stroke="rgba(94,180,255,.35)"/><text x="869" y="137" font-size="11.5">PartnerEDU · pre-matriculation</text>
+        </g></g>
+        <!-- 4 DATA 360 -->
+        <g class="pp d5"><g class="node" data-id="l-data">
+          <rect x="20" y="162" width="120" height="46" rx="10" fill="rgba(167,139,250,.16)" stroke="var(--violet)"/><text x="80" y="189" font-size="11" font-weight="800" fill="#a78bfa">DATA 360</text>
+          <rect x="148" y="162" width="892" height="46" rx="10" fill="url(#lg)" stroke="rgba(167,139,250,.35)"/>
+          <rect x="166" y="171" width="270" height="28" rx="7" fill="rgba(167,139,250,.08)" stroke="rgba(167,139,250,.35)"/><text x="301" y="189" font-size="11.5">Data 360 · Instance 1</text>
+          <rect x="450" y="171" width="270" height="28" rx="7" fill="rgba(167,139,250,.2)" stroke="#a78bfa"/><text x="585" y="189" font-size="11.5" font-weight="800" fill="#e2d7ff">Zero Copy / Data Share</text>
+          <rect x="734" y="171" width="270" height="28" rx="7" fill="rgba(167,139,250,.08)" stroke="rgba(167,139,250,.35)"/><text x="869" y="189" font-size="11.5">Data 360 · Instance 2</text>
+        </g></g>
+        <!-- 5 ANALYTICS -->
+        <g class="pp d6"><g class="node" data-id="l-analytics">
+          <rect x="20" y="214" width="120" height="46" rx="10" fill="rgba(52,211,153,.14)" stroke="var(--emerald)"/><text x="80" y="241" font-size="11" font-weight="800" fill="#34d399">ANALYTICS</text>
+          <rect x="148" y="214" width="892" height="46" rx="10" fill="url(#lg)" stroke="rgba(52,211,153,.35)"/>
+          <rect x="166" y="223" width="270" height="28" rx="7" fill="rgba(52,211,153,.08)" stroke="rgba(52,211,153,.3)"/><text x="301" y="241" font-size="11.5">Microsoft Fabric</text>
+          <rect x="450" y="223" width="270" height="28" rx="7" fill="rgba(52,211,153,.08)" stroke="rgba(52,211,153,.3)"/><text x="585" y="241" font-size="11.5">OneLake</text>
+          <rect x="734" y="223" width="270" height="28" rx="7" fill="rgba(52,211,153,.08)" stroke="rgba(52,211,153,.3)"/><text x="869" y="241" font-size="11.5">Foundry / Rosetta</text>
+        </g></g>
+        <!-- 6 INTEGRATION -->
+        <g class="pp d6"><g class="node" data-id="l-integration">
+          <rect x="20" y="266" width="120" height="46" rx="10" fill="rgba(56,189,248,.14)" stroke="#38bdf8"/><text x="80" y="288" font-size="10.5" font-weight="800" fill="#38bdf8">INTEGRA-</text><text x="80" y="301" font-size="10.5" font-weight="800" fill="#38bdf8">TION</text>
+          <rect x="148" y="266" width="892" height="46" rx="10" fill="url(#lg)" stroke="rgba(56,189,248,.35)"/>
+          <rect x="166" y="275" width="270" height="28" rx="7" fill="rgba(56,189,248,.08)" stroke="rgba(56,189,248,.3)"/><text x="301" y="293" font-size="11.5">Boomi ESB</text>
+          <rect x="450" y="275" width="270" height="28" rx="7" fill="rgba(56,189,248,.08)" stroke="rgba(56,189,248,.3)"/><text x="585" y="293" font-size="11.5">Azure API Gateway</text>
+          <rect x="734" y="275" width="270" height="28" rx="7" fill="rgba(56,189,248,.08)" stroke="rgba(56,189,248,.3)"/><text x="869" y="293" font-size="11.5">REST · Bulk · Composite API</text>
+        </g></g>
+        <!-- 7 SATELLITE -->
+        <g class="pp d6"><g class="node" data-id="l-satellite">
+          <rect x="20" y="318" width="120" height="46" rx="10" fill="rgba(135,152,201,.14)" stroke="#8798c9"/><text x="80" y="345" font-size="11" font-weight="800" fill="#8798c9">SATELLITE</text>
+          <rect x="148" y="318" width="892" height="46" rx="10" fill="url(#lg)" stroke="rgba(135,152,201,.3)"/>
+          <rect x="166" y="327" width="198" height="28" rx="7" fill="rgba(135,152,201,.08)" stroke="rgba(135,152,201,.3)"/><text x="265" y="345" font-size="11.5">140+ systems</text>
+          <rect x="384" y="327" width="198" height="28" rx="7" fill="rgba(135,152,201,.08)" stroke="rgba(135,152,201,.3)"/><text x="483" y="345" font-size="11.5">UAS2 · L3AP</text>
+          <rect x="602" y="327" width="198" height="28" rx="7" fill="rgba(135,152,201,.08)" stroke="rgba(135,152,201,.3)"/><text x="701" y="345" font-size="11.5">CMIS · CMS</text>
+          <rect x="820" y="327" width="198" height="28" rx="7" fill="rgba(135,152,201,.08)" stroke="rgba(135,152,201,.3)"/><text x="919" y="345" font-size="11.5">IMMS · final grade only</text>
+        </g></g>
+      </g>
+      <text x="540" y="384" text-anchor="middle" font-size="11" font-weight="700" fill="#8fa3d8">Security spine - RBAC → ABAC → RLS travels with the data across every layer</text>
+    </svg>
+  </div>
+</section>
+
+<!-- ============ ACADEMIC STRUCTURE SOLUTION ============ -->
+<section class="slide">
+  <span class="tag">Academic Structure Solution</span><span class="pg"></span>
+  <div class="kick">The data model, by build state</div>
+  <h2>Standard where we can. Custom where NUS is unique.</h2>
+  <div class="anim d1" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin:14px 0 2px">
+    <span style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;color:var(--ink-2);border:1px solid var(--line);background:var(--glass);border-radius:999px;padding:7px 15px"><i style="width:11px;height:11px;border-radius:3px;background:#34d399;display:block"></i>GA <b style="color:#fff;font-weight:700">standard EDC, usable today</b></span>
+    <span style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;color:var(--ink-2);border:1px solid var(--line);background:var(--glass);border-radius:999px;padding:7px 15px"><i style="width:11px;height:11px;border-radius:3px;background:#fbbf24;display:block"></i>To-be-GA <b style="color:#fff;font-weight:700">on the roadmap (directional)</b></span>
+    <span style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;color:var(--ink-2);border:1px solid var(--line);background:var(--glass);border-radius:999px;padding:7px 15px"><i style="width:11px;height:11px;border-radius:3px;background:#a78bfa;display:block"></i>Customization <b style="color:#fff;font-weight:700">NUS build on top</b></span>
+  </div>
+  <div class="fill">
+    <svg class="anim d2" width="1080" height="366" viewBox="0 0 1080 366" aria-hidden="true">
+      <defs>
+        <marker id="adAS" markerWidth="9" markerHeight="8" refX="8" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="rgba(52,211,153,.75)"/></marker>
+      </defs>
+      <!-- ===== GA region label ===== -->
+      <text x="14" y="11" font-size="10.5" font-weight="800" fill="#7be0a0" letter-spacing=".14em">STANDARD EDC · GENERALLY AVAILABLE</text>
+
+      <!-- connectors (drawn first, behind nodes) -->
+      <g stroke="rgba(52,211,153,.5)" stroke-width="1.5" fill="none" marker-end="url(#adAS)">
+        <!-- Faculty offers Programme -->
+        <path d="M210,100 L246,44"/>
+        <!-- Department offers Course (routed through the column gap at x=498) -->
+        <path d="M210,159 L498,159 L498,44 L520,44"/>
+        <!-- Course -> Offering -> Term (Offering = Course x Term) -->
+        <path d="M629,70 L629,80"/>
+        <path d="M629,136 L629,126"/>
+      </g>
+      <!-- offers labels -->
+      <text x="224" y="70" font-size="8.5" font-weight="700" fill="#7be0a0" text-anchor="middle" transform="rotate(-52 224 70)">offers</text>
+      <text x="506" y="132" font-size="8.5" font-weight="700" fill="#7be0a0" text-anchor="middle">offers</text>
+      <text x="700" y="106" font-size="8.5" font-weight="700" fill="#8fe6c4">= Course × Term</text>
+      <!-- Lego link: LearnerProgram binds to each, no roll-up -->
+      <path d="M355,70 L355,136" stroke="rgba(167,139,250,.55)" stroke-width="1.5" stroke-dasharray="4 4" fill="none"/>
+      <!-- EducInstitutionOffering dashed junction lines -->
+      <g stroke="rgba(52,211,153,.4)" stroke-width="1.3" stroke-dasharray="3 4" fill="none">
+        <path d="M792,86 L464,50"/>
+        <path d="M792,104 L734,150"/>
+      </g>
+
+      <!-- ===== GA nodes ===== -->
+      <!-- Account hierarchy -->
+      <g class="pp d3" text-anchor="middle">
+        <g class="node"><rect x="14" y="24" width="196" height="46" rx="10" fill="rgba(52,211,153,.10)" stroke="rgba(52,211,153,.55)"/><text x="112" y="43" font-size="12" font-weight="800" fill="#eafff6">University</text><text x="112" y="58" font-size="9" fill="#8fe6c4">Account · RecordType</text></g>
+        <g class="node"><rect x="14" y="80" width="196" height="46" rx="10" fill="rgba(52,211,153,.10)" stroke="rgba(52,211,153,.55)"/><text x="112" y="99" font-size="12" font-weight="800" fill="#eafff6">School / Faculty</text><text x="112" y="114" font-size="9" fill="#8fe6c4">Account · RecordType</text></g>
+        <g class="node"><rect x="14" y="136" width="196" height="46" rx="10" fill="rgba(52,211,153,.10)" stroke="rgba(52,211,153,.55)"/><text x="112" y="155" font-size="12" font-weight="800" fill="#eafff6">Department</text><text x="112" y="170" font-size="9" fill="#8fe6c4">Account · RecordType</text></g>
+        <!-- parent chain ticks -->
+        <line x1="112" y1="70" x2="112" y2="80" stroke="rgba(52,211,153,.45)" stroke-width="1.4"/>
+        <line x1="112" y1="126" x2="112" y2="136" stroke="rgba(52,211,153,.45)" stroke-width="1.4"/>
+      </g>
+      <!-- Programme structure -->
+      <g class="pp d4" text-anchor="middle">
+        <g class="node"><rect x="246" y="24" width="218" height="46" rx="10" fill="rgba(52,211,153,.10)" stroke="rgba(52,211,153,.55)"/><text x="355" y="43" font-size="12" font-weight="800" fill="#eafff6">Academic Programme</text><text x="355" y="58" font-size="9" fill="#8fe6c4">LearningProgram</text></g>
+        <g class="node"><rect x="246" y="80" width="218" height="46" rx="10" fill="rgba(52,211,153,.10)" stroke="rgba(52,211,153,.55)"/><text x="355" y="99" font-size="12" font-weight="800" fill="#eafff6">Plan / Major / Minor</text><text x="355" y="114" font-size="9" fill="#8fe6c4">LearningProgram · Lego block</text></g>
+        <g class="node"><rect x="246" y="136" width="218" height="46" rx="10" fill="rgba(52,211,153,.10)" stroke="rgba(52,211,153,.55)"/><text x="355" y="155" font-size="12" font-weight="800" fill="#eafff6">Student Enrollment</text><text x="355" y="170" font-size="9" fill="#8fe6c4">LearnerProgram · links to each</text></g>
+      </g>
+      <!-- Catalogue & calendar -->
+      <g class="pp d5" text-anchor="middle">
+        <g class="node"><rect x="524" y="24" width="210" height="46" rx="10" fill="rgba(52,211,153,.10)" stroke="rgba(52,211,153,.55)"/><text x="629" y="43" font-size="12" font-weight="800" fill="#eafff6">Course</text><text x="629" y="58" font-size="9" fill="#8fe6c4">LearningCourse</text></g>
+        <g class="node"><rect x="524" y="80" width="210" height="46" rx="10" fill="rgba(52,211,153,.10)" stroke="rgba(52,211,153,.55)"/><text x="629" y="99" font-size="12" font-weight="800" fill="#eafff6">Course Offering</text><text x="629" y="114" font-size="9" fill="#8fe6c4">CourseOffering</text></g>
+        <g class="node"><rect x="524" y="136" width="210" height="46" rx="10" fill="rgba(52,211,153,.10)" stroke="rgba(52,211,153,.55)"/><text x="629" y="155" font-size="12" font-weight="800" fill="#eafff6">Term / Semester</text><text x="629" y="170" font-size="9" fill="#8fe6c4">AcademicTerm</text></g>
+      </g>
+      <!-- Junction object -->
+      <g class="pp d6" text-anchor="middle">
+        <g class="node"><rect x="792" y="70" width="274" height="56" rx="10" fill="rgba(52,211,153,.10)" stroke="rgba(52,211,153,.55)"/><text x="929" y="90" font-size="12" font-weight="800" fill="#eafff6">Programme–Faculty–Term</text><text x="929" y="106" font-size="9" fill="#8fe6c4">EducInstitutionOffering</text><text x="929" y="119" font-size="8.5" fill="#c7a86a">GA · new (Spring '25) — verify in org</text></g>
+      </g>
+
+      <!-- ===== divider ===== -->
+      <line x1="14" y1="206" x2="1066" y2="206" stroke="rgba(255,255,255,.12)" stroke-width="1"/>
+      <text x="14" y="226" font-size="10.5" font-weight="800" fill="#c9b6ff" letter-spacing=".14em">NUS BUILD LAYER · CONFIGURED / CUSTOM ON TOP OF THE GA MODEL</text>
+
+      <!-- ===== build-layer cards ===== -->
+      <g class="pp d6">
+        <!-- Academic Career -->
+        <rect x="14" y="238" width="336" height="120" rx="12" fill="rgba(167,139,250,.13)" stroke="rgba(167,139,250,.55)"/>
+        <text x="32" y="262" font-size="9" font-weight="800" fill="#c9b6ff" letter-spacing=".12em">CUSTOMIZATION</text>
+        <text x="32" y="285" font-size="15" font-weight="800" fill="#fff">Academic Career</text>
+        <text x="32" y="305" font-size="10.5" fill="#d6c9ff">7 careers govern calendar, grading &amp; GPA scope</text>
+        <text x="32" y="326" font-size="9.5" fill="#a99fd0">Today: LearningProgram RecordType + AcademicLevel picklist</text>
+        <text x="32" y="342" font-size="9.5" fill="#a99fd0">Target: dedicated custom object — no native EDC equivalent</text>
+
+        <!-- Effective-dated versioning -->
+        <rect x="372" y="238" width="336" height="120" rx="12" fill="rgba(167,139,250,.13)" stroke="rgba(167,139,250,.55)"/>
+        <text x="390" y="262" font-size="9" font-weight="800" fill="#c9b6ff" letter-spacing=".12em">CUSTOMIZATION</text>
+        <text x="390" y="285" font-size="15" font-weight="800" fill="#fff">Effective-dated versioning</text>
+        <text x="390" y="305" font-size="10.5" fill="#d6c9ff">As-of-date resolution · insert-only · no deep clone</text>
+        <text x="390" y="321" font-size="9.5" fill="#a99fd0">Native bookend dates only (ActiveFrom/To, VersionNumber)</text>
+        <rect x="390" y="330" width="300" height="18" rx="9" fill="rgba(251,191,36,.12)" stroke="var(--amber)"/>
+        <text x="399" y="342.5" font-size="8.5" font-weight="800" fill="#f6d488">TO-BE-GA · Course Versioning (Winter '27) — directional only</text>
+
+        <!-- Programme-level GPA -->
+        <rect x="730" y="238" width="336" height="120" rx="12" fill="rgba(167,139,250,.13)" stroke="rgba(167,139,250,.55)"/>
+        <text x="748" y="262" font-size="9" font-weight="800" fill="#c9b6ff" letter-spacing=".12em">CUSTOMIZATION</text>
+        <text x="748" y="285" font-size="15" font-weight="800" fill="#fff">Programme-level GPA</text>
+        <text x="748" y="305" font-size="10.5" fill="#d6c9ff">Per-LearnerProgram store + Apex batch compute</text>
+        <text x="748" y="326" font-size="9.5" fill="#a99fd0">Legacy computes at career level; NUS needs programme level</text>
+        <text x="748" y="342" font-size="9.5" fill="#a99fd0">No GPA field on LearnerProgram today</text>
+      </g>
+    </svg>
+  </div>
+  <div class="mini anim d6"><span><b>7</b> GA standard objects</span><span><b>1</b> roadmap watch-item</span><span><b>3</b> NUS build items</span><span>Standard-first - custom only where NUS is <b>structurally</b> unique</span></div>
+</section>
+
+<!-- ============ 15 · CLOSE ============ -->
+<section class="slide center">
+  <span class="tag">Summary &amp; discussion</span><span class="pg"></span>
+  <svg class="hero-wrap" style="right:auto;left:50%;transform:translate(-50%,-50%);opacity:.3" viewBox="0 0 620 620" aria-hidden="true">
+    <circle cx="310" cy="310" r="150" fill="none" stroke="rgba(34,211,238,.3)" class="orbit" stroke-dasharray="3 10"/>
+    <circle cx="310" cy="310" r="230" fill="none" stroke="rgba(167,139,250,.25)" class="orbit-s" stroke-dasharray="2 12"/>
+  </svg>
+  <div class="body center" style="z-index:3">
+    <div class="kick" style="justify-content:center">The one thing to remember</div>
+    <h1 style="max-width:960px;text-align:center;font-size:46px">Two orgs, one experience - a working system replaced on a fixed clock, made agentic, with no student left behind</h1>
+    <div class="mini anim d3" style="justify-content:center;margin-top:30px">
+      <span><b>Deadline de-risked</b></span><span><b>On-prem → cloud</b></span><span><b>Grounded, gated AI</b></span><span><b>One record</b></span><span><b>Standard-first</b></span>
+    </div>
+    <p class="sub anim d5" style="text-align:center;margin:26px auto 0;color:var(--muted)">Happy to go deeper: org topology · trust architecture · migration sequencing · multi-partner delivery</p>
+  </div>
+</section>
+
+</div></div></div>
+
+<div id="bar">
+  <button id="prev" title="Previous (←)">‹</button>
+  <span class="pos" id="pos">1 / 15</span>
+  <button id="next" title="Next (→)">›</button>
+  <button class="fs" id="fsbtn" title="Fullscreen (F)">Fullscreen</button>
+</div>
+
+<script>
+  var track=document.getElementById('track'), scaler=document.getElementById('scaler');
+  var slides=[].slice.call(document.querySelectorAll('.slide'));
+  var i=0, N=slides.length, W=1280, H=720;
+  slides.forEach(function(s,idx){var p=s.querySelector('.pg'); if(p)p.textContent=(idx+1)+' / '+N;});
+  // raise a hovered delivery-map cell above its neighbours while zoomed
+  [].slice.call(document.querySelectorAll('.mod')).forEach(function(g){
+    g.addEventListener('mouseenter',function(){ g.parentNode.appendChild(g); });
+  });
+
+  function fit(){var s=Math.min(window.innerWidth/W, window.innerHeight/H); scaler.style.transform='scale('+s+')';}
+  function counters(slide){
+    slide.querySelectorAll('.ctr').forEach(function(el){
+      var to=+el.getAttribute('data-to'), dur=1100, t0=null;
+      function step(t){ if(!t0)t0=t; var p=Math.min((t-t0)/dur,1); var e=1-Math.pow(1-p,3);
+        el.textContent=Math.round(to*e); if(p<1)requestAnimationFrame(step);}
+      el.textContent='0'; requestAnimationFrame(step);
+    });
+  }
+  function render(){
+    track.style.transform='translateX('+(-i*W)+'px)';
+    slides.forEach(function(s,idx){s.classList.toggle('active',idx===i);});
+    document.body.classList.toggle('on-title',i===0);
+    document.getElementById('pos').textContent=(i+1)+' / '+N;
+    document.getElementById('prev').disabled=(i===0);
+    document.getElementById('next').disabled=(i===N-1);
+    document.getElementById('prog').style.width=((i)/(N-1)*100)+'%';
+    if(history.replaceState)history.replaceState(null,'','#s='+(i+1));
+    counters(slides[i]);
+  }
+  function go(n){i=Math.max(0,Math.min(N-1,n));render();}
+  function step(d){go(i+d);}
+
+  /* ---- JUMP TO navigation ---- */
+  var NAV=[
+    {t:'Title',s:'Replatform the SIS onto Salesforce'},
+    {t:'The Problem',s:'A 20-year on-premise SIS core'},
+    {t:'The Vision',s:'Five perspectives, one foundation'},
+    {t:'Delivery Strategy',s:'Two-phase model migration'},
+    {t:'Org Strategy',s:'Converging to a single org'},
+    {t:'Integration',s:'One spine, 140+ systems'},
+    {t:'Data & Reporting',s:'Five tiers, one security spine'},
+    {t:'Trusted AI',s:'Trust first, intelligence second'},
+    {t:'Delivery Strategy',s:'Two orgs, one experience'},
+    {t:'Architecture',s:'Seven layers, one job each'},
+    {t:'Academic Structure',s:'GA, roadmap & custom on one board'},
+    {t:'Discussion',s:'Summary & open Q&A'}
+  ];
+  var navov=document.getElementById('navov'), navgrid=document.getElementById('navgrid');
+  NAV.forEach(function(d,idx){
+    var c=document.createElement('button'); c.className='navcard';
+    c.innerHTML='<span class="nn">'+(idx<9?'0':'')+(idx+1)+'</span><span class="ntx"><b>'+d.t+'</b><s>'+d.s+'</s></span>';
+    c.onclick=function(){go(idx);closeNav();};
+    navgrid.appendChild(c);
+  });
+  function openNav(){
+    [].forEach.call(navgrid.children,function(c,idx){c.classList.toggle('cur',idx===i);c.style.animationDelay=(idx*0.028)+'s';});
+    navov.classList.add('open');
+  }
+  function closeNav(){navov.classList.remove('open');}
+  function toggleNav(){navov.classList.contains('open')?closeNav():openNav();}
+  document.getElementById('sflogo').onclick=toggleNav;
+  document.getElementById('heroLogo').onclick=toggleNav;
+  document.getElementById('navclose').onclick=closeNav;
+  navov.addEventListener('click',function(e){if(e.target===navov)closeNav();});
+  document.getElementById('prev').onclick=function(){step(-1);};
+  document.getElementById('next').onclick=function(){step(1);};
+  document.getElementById('fsbtn').onclick=function(){
+    if(!document.fullscreenElement)document.documentElement.requestFullscreen(); else document.exitFullscreen();};
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'){closeNav();return;}
+    if(e.key==='m'||e.key==='M'){toggleNav();return;}
+    if(navov.classList.contains('open'))return;
+    if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();step(1);}
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();step(-1);}
+    else if(e.key==='Home')go(0); else if(e.key==='End')go(N-1);
+    else if(e.key==='f'||e.key==='F')document.getElementById('fsbtn').click();});
+  window.addEventListener('resize',fit);
+  document.addEventListener('fullscreenchange',fit);
+  var m=/[#&]s=(\d+)/.exec(location.hash||''); i=m?Math.max(0,Math.min(N-1,parseInt(m[1],10)-1)):0;
+  fit();render();
+
+  /* ---- hover-to-highlight: hover a node, its edges + connected nodes stay lit, the rest dim ---- */
+  [].forEach.call(document.querySelectorAll('.slide svg'),function(svg){
+    var nodes=[].slice.call(svg.querySelectorAll('.node'));
+    if(!nodes.length)return;
+    var edges=[].slice.call(svg.querySelectorAll('.edge'));
+    function clear(){svg.classList.remove('hovering');nodes.forEach(function(n){n.classList.remove('hot');});edges.forEach(function(e){e.classList.remove('hot');});}
+    nodes.forEach(function(node){
+      node.addEventListener('mouseenter',function(){
+        var id=node.getAttribute('data-id'); var lit={}; lit[id]=1;
+        svg.classList.add('hovering'); node.classList.add('hot');
+        edges.forEach(function(e){
+          var lk=(e.getAttribute('data-link')||'').split(/\s+/);
+          if(lk.indexOf(id)>-1){e.classList.add('hot');lk.forEach(function(x){lit[x]=1;});}
+        });
+        nodes.forEach(function(n){if(lit[n.getAttribute('data-id')])n.classList.add('hot');});
+      });
+      node.addEventListener('mouseleave',clear);
+    });
+  });
+</script>
+</body>
+</html>
